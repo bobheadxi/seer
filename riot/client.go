@@ -2,11 +2,11 @@ package riot
 
 import (
 	"context"
+	"net/http"
 	"path"
 	"sync"
 
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -24,25 +24,26 @@ type client struct {
 }
 
 // NewClient instantiates an API implementation
-func NewClient(l *zap.Logger, auth oauth2.TokenSource) API {
-	httpC := oauth2.NewClient(context.Background(), auth)
+func NewClient(l *zap.Logger, auth string) (API, error) {
 	return &client{
 		l:       l,
-		http:    &httpClient{httpC},
+		http:    &httpClient{l.Named("http"), http.DefaultClient, auth},
 		regions: make(map[Region]*regionalClient),
-	}
+	}, nil
 }
 
 func (c *client) WithRegion(r Region) RegionalAPI {
 	c.rmux.RLock()
 	regional, exists := c.regions[r]
-	c.rmux.Unlock()
+	c.rmux.RUnlock()
 	if !exists {
 		regional = &regionalClient{
 			host: apiHost(r),
 			http: c.http,
 		}
+		c.rmux.Lock()
 		c.regions[r] = regional
+		c.rmux.Unlock()
 	}
 	return regional
 }
@@ -68,12 +69,20 @@ func (c *regionalClient) SummonerByAccount(ctx context.Context, account string) 
 		&sum)
 }
 
+type matchesResponse struct {
+	Matches []Match `json:"matches"`
+}
+
 func (c *regionalClient) Matches(ctx context.Context, account string) ([]Match, error) {
-	var matches []Match
-	return matches, c.http.Get(ctx,
+	var resp matchesResponse
+	if err := c.http.Get(ctx,
 		path.Join(c.host, pathMatchesByAccount, account),
 		newParams().Q("queue", queue5v5Draft).Q("queue", queue5v5Flex).Q("queue", queueClash),
-		&matches)
+		&resp,
+	); err != nil {
+		return nil, err
+	}
+	return resp.Matches, nil
 }
 
 func (c *regionalClient) MatchDetails(ctx context.Context, matchID string) (*MatchDetails, error) {

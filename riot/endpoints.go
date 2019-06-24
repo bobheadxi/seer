@@ -2,6 +2,7 @@ package riot
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
@@ -12,5 +13,5 @@ const (
 )
 
 func apiHost(region Region) string {
-	return fmt.Sprintf("https://%s.api.riotgames.com", region)
+	return fmt.Sprintf("%s.api.riotgames.com", strings.ToLower(string(region)))
 }

@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # API
+      - "8081:8081" # job monitor
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    logging:
+      driver: none

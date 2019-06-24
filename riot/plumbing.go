@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/middleware"
+	"go.uber.org/zap"
 )
 
 type params []string
@@ -25,14 +28,21 @@ func (p params) Build() string {
 }
 
 type httpClient struct {
+	l    *zap.Logger
 	http *http.Client
+
+	auth string
 }
 
 func (c *httpClient) Get(ctx context.Context, url string, query params, out interface{}) error {
-	req, err := http.NewRequest(http.MethodGet, url+query.Build(), nil)
+	log := c.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("target.url", url))
+
+	req, err := http.NewRequest(http.MethodGet, "https://"+url+query.Build(), nil)
 	if err != nil {
 		return err
 	}
+	log.Debug("request created", zap.Any("target.parsed_url", req.URL))
+	req.Header.Set("X-Riot-Token", c.auth)
 
 	resp, err := c.http.Do(req.WithContext(ctx))
 	if err != nil {
@@ -47,6 +57,8 @@ func (c *httpClient) Get(ctx context.Context, url string, query params, out inte
 	if err != nil {
 		return err
 	}
+	log.Debug("request completed", zap.Int("body.length", len(b)), zap.Int("code", resp.StatusCode))
+
 	return json.Unmarshal(b, out)
 }
 

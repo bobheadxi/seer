@@ -33,7 +33,7 @@ type BaseJobContext struct {
 
 // NewJobsEngine instantiates a new job runn
 func NewJobsEngine(l *zap.Logger, app string, redisPool *redis.Pool, b *BaseJobContext) Engine {
-	pool := work.NewWorkerPool(nil, uint(runtime.NumCPU()), app, redisPool)
+	pool := work.NewWorkerPool(BaseJobContext{}, uint(runtime.NumCPU()), app, redisPool)
 
 	matchesSync := &matchesSyncContext{l.Named("matches_sync"), b}
 	pool.Job(jobMatchesSync, matchesSync.Run)
@@ -49,7 +49,14 @@ func NewJobsEngine(l *zap.Logger, app string, redisPool *redis.Pool, b *BaseJobC
 func (e *engine) Queue(j Job) (string, error) {
 	name, params := j.Name(), j.Params()
 	log := e.l.With(zap.String("job.name", name), zap.Any("job.params", params))
-	job, err := e.queue.Enqueue(j.Name(), params)
+
+	var job *work.Job
+	var err error
+	if j.Unique() {
+		job, err = e.queue.EnqueueUnique(j.Name(), params)
+	} else {
+		job, err = e.queue.Enqueue(j.Name(), params)
+	}
 	if err != nil {
 		log.Error("job failed to queue", zap.Error(err))
 		return "", err

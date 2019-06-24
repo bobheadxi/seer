@@ -23,6 +23,7 @@ type (
 		SummonerLevel int    `json:"summonerLevel"`
 		ProfileIconID int    `json:"profileIconId"`
 		AccountID     string `json:"accountId"`
+		PlayerID      string `json:"id"`
 	}
 
 	// Match represents a match overview
@@ -185,51 +186,16 @@ type (
 			Spell2ID                  int    `json:"spell2Id"`
 			TeamID                    int    `json:"teamId"`
 			Timeline                  struct {
-				Lane               string `json:"lane"`
-				ParticipantID      int    `json:"participantId"`
-				CsDiffPerMinDeltas struct {
-					Three0End float64 `json:"30-end"`
-					Two030    float64 `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    float64 `json:"10-20"`
-				} `json:"csDiffPerMinDeltas"`
-				GoldPerMinDeltas struct {
-					Three0End int     `json:"30-end"`
-					Two030    int     `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    float64 `json:"10-20"`
-				} `json:"goldPerMinDeltas"`
-				XpDiffPerMinDeltas struct {
-					Three0End float64 `json:"30-end"`
-					Two030    float64 `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    float64 `json:"10-20"`
-				} `json:"xpDiffPerMinDeltas"`
-				CreepsPerMinDeltas struct {
-					Three0End float64 `json:"30-end"`
-					Two030    float64 `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    int     `json:"10-20"`
-				} `json:"creepsPerMinDeltas"`
-				XpPerMinDeltas struct {
-					Three0End float64 `json:"30-end"`
-					Two030    float64 `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    int     `json:"10-20"`
-				} `json:"xpPerMinDeltas"`
-				Role                        string `json:"role"`
-				DamageTakenDiffPerMinDeltas struct {
-					Three0End float64 `json:"30-end"`
-					Two030    float64 `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    float64 `json:"10-20"`
-				} `json:"damageTakenDiffPerMinDeltas"`
-				DamageTakenPerMinDeltas struct {
-					Three0End float64 `json:"30-end"`
-					Two030    float64 `json:"20-30"`
-					Zero10    float64 `json:"0-10"`
-					One020    float64 `json:"10-20"`
-				} `json:"damageTakenPerMinDeltas"`
+				ParticipantID               int                `json:"participantId"`
+				Lane                        string             `json:"lane"`
+				Role                        string             `json:"role"`
+				CsDiffPerMinDeltas          map[string]float64 `json:"csDiffPerMinDeltas"`
+				GoldPerMinDeltas            map[string]float64 `json:"goldPerMinDeltas"`
+				XpDiffPerMinDeltas          map[string]float64 `json:"xpDiffPerMinDeltas"`
+				CreepsPerMinDeltas          map[string]float64 `json:"creepsPerMinDeltas"`
+				XpPerMinDeltas              map[string]float64 `json:"xpPerMinDeltas"`
+				DamageTakenDiffPerMinDeltas map[string]float64 `json:"damageTakenDiffPerMinDeltas"`
+				DamageTakenPerMinDeltas     map[string]float64 `json:"damageTakenPerMinDeltas"`
 			} `json:"timeline"`
 			ChampionID int `json:"championId"`
 		} `json:"participants"`

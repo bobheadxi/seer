@@ -4,6 +4,7 @@ package jobs
 type Job interface {
 	Name() string
 	Params() map[string]interface{}
+	Unique() bool
 }
 
 const jobKey = "seer.jobkey"

@@ -2,9 +2,11 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/middleware"
 	"github.com/gocraft/work"
 	"go.bobheadxi.dev/seer/riot"
 	"go.bobheadxi.dev/seer/store"
@@ -25,6 +27,8 @@ func NewMatchesSyncJob(teamID, requestID string) Job {
 
 func (m *matchesSyncJob) Name() string { return jobMatchesSync }
 
+func (m *matchesSyncJob) Unique() bool { return true }
+
 func (m *matchesSyncJob) Params() map[string]interface{} {
 	return map[string]interface{}{
 		"team.id":    m.teamID,
@@ -39,7 +43,6 @@ type matchesSyncContext struct {
 
 func (m *matchesSyncContext) Run(job *work.Job) error {
 	var (
-		ctx       = context.Background()
 		teamID    = job.ArgString("team.id")
 		requestID = job.ArgString("request.id")
 		start     = time.Now()
@@ -47,6 +50,7 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 			zap.String("job.id", job.ID),
 			zap.String("team.id", teamID),
 			zap.String("request.id", requestID))
+		ctx = context.WithValue(context.Background(), middleware.RequestIDKey, requestID)
 	)
 
 	log.Info("job started")
@@ -56,7 +60,8 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 	log.Debug("looking for known team data")
 	team, storedMatches, err := m.Store.Get(ctx, teamID)
 	if err != nil {
-		return err
+		log.Error("failed to find team", zap.Error(err))
+		return fmt.Errorf("error while looking for team in store: %v", err)
 	}
 
 	// see what matches have already been tracked
@@ -70,12 +75,16 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 		zap.String("riot.region", string(team.Region)))
 	discoveredMatches := make(map[int64]int)
 	api := m.RiotAPI.WithRegion(riot.Region(team.Region))
-	for _, member := range team.Members {
+	for i, member := range team.Members {
+		job.Checkin(fmt.Sprintf("member=%d name=%s", i, member.Name))
 		matches, err := api.Matches(ctx, member.AccountID)
 		if err != nil {
-			return err
+			log.Error("failed to find matches", zap.Error(err),
+				zap.String("summoner", member.Name))
+			return fmt.Errorf("error querying for matches for matches: %v", err)
 		}
 		for _, match := range matches {
+			// ignore if we already have this match in store
 			if knownMatches[match.GameID] {
 				continue
 			}
@@ -90,9 +99,11 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 		if count < 4 {
 			continue
 		}
+		job.Checkin(fmt.Sprintf("game_count=%d game=%d", len(matchesToStore), game))
 		details, err := api.MatchDetails(ctx, strconv.Itoa(int(game)))
 		if err != nil {
-			return err
+			log.Error("failed to find game", zap.Error(err), zap.Int64("game", game))
+			return fmt.Errorf("error querying for match details: %v", err)
 		}
 		matchesToStore = append(matchesToStore, store.MatchData{
 			Details: details,
@@ -106,8 +117,10 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 	}
 
 	log.Debug("storing match data")
+	job.Checkin(fmt.Sprintf("new_game_count=%d", len(matchesToStore)))
 	if err := m.Store.Add(ctx, teamID, matchesToStore); err != nil {
-		return err
+		log.Error("failed to store matches", zap.Error(err))
+		return fmt.Errorf("error saving results to store: %v", err)
 	}
 
 	return nil

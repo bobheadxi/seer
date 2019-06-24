@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/teris-io/shortid"
 	"go.uber.org/zap"
 
 	"go.bobheadxi.dev/res"
@@ -21,11 +20,9 @@ type teamAPI struct {
 	riotAPI   riot.API
 	backend   store.Store
 	jobEngine jobs.Engine
-
-	idgen *shortid.Shortid
 }
 
-func (t teamAPI) Group(r chi.Router) {
+func (t *teamAPI) Group(r chi.Router) {
 	r.Post("/", t.postTeam)
 	r.Get("/{teamID}", t.getTeam)
 	r.Post("/update/{teamID}", t.postUpdateTeam)
@@ -39,11 +36,15 @@ type newTeamRequest struct {
 func (t *teamAPI) postTeam(w http.ResponseWriter, r *http.Request) {
 	var n newTeamRequest
 	if err := read(r, &n); err != nil {
-		res.ErrBadRequest(err.Error())
+		res.R(w, r, res.ErrBadRequest(err.Error()))
 		return
 	}
-	if len(n.Members) == 0 {
-		res.ErrBadRequest("no members in this team")
+	if len(n.Members) < 5 {
+		res.R(w, r, res.ErrBadRequest("insufficent members in this team (minimum: 5)"))
+		return
+	}
+	if len(n.Members) > 10 {
+		res.R(w, r, res.ErrBadRequest("too many members in team (maximum: 10)"))
 		return
 	}
 
@@ -60,33 +61,27 @@ func (t *teamAPI) postTeam(w http.ResponseWriter, r *http.Request) {
 		s, err := riotAPI.Summoner(r.Context(), name)
 		if err != nil { // TODO: better responses
 			log.Error("failed to find summoner", zap.Error(err))
-			res.ErrInternalServer("failed to find summoner", err,
-				"summoner", name)
+			res.R(w, r, res.ErrInternalServer("failed to find summoner", err,
+				"summoner", name))
 			return
 		}
 		team.Members[i] = s
 	}
 
-	teamID, err := t.idgen.Generate()
-	if err != nil {
-		log.Error("failed to generate ID for team", zap.Error(err))
-		res.ErrInternalServer("failed to generate ID for team", err)
-		return
-	}
-
+	teamID := team.GenerateTeamID()
 	log = log.With(zap.String("team.id", teamID))
 	log.Info("discovered team", zap.Any("team.members", team.Members))
 
 	// commit to datastore
 	if err := t.backend.Create(r.Context(), teamID, team); err != nil {
 		log.Error("failed to store team data", zap.Error(err))
-		res.ErrInternalServer("failed to store team data", err)
+		res.R(w, r, res.ErrInternalServer("failed to store team data", err))
 		return
 	}
 
 	log.Info("team stored")
-	res.MsgOK("team created",
-		"team.id", teamID)
+	res.R(w, r, res.MsgOK("team created",
+		"team.id", teamID))
 }
 
 func (t *teamAPI) getTeam(w http.ResponseWriter, r *http.Request) {
@@ -98,14 +93,14 @@ func (t *teamAPI) getTeam(w http.ResponseWriter, r *http.Request) {
 	team, matches, err := t.backend.Get(r.Context(), teamID)
 	if err != nil { // TODO better responses
 		log.Error("failed to find team", zap.Error(err))
-		res.ErrInternalServer("failed to find team", err)
+		res.R(w, r, res.ErrInternalServer("failed to find team", err))
 		return
 	}
 
 	log.Info("team found")
-	res.MsgOK("team found",
+	res.R(w, r, res.MsgOK("team found",
 		"team", team,
-		"matches", matches)
+		"matches", matches))
 }
 
 func (t *teamAPI) postUpdateTeam(w http.ResponseWriter, r *http.Request) {
@@ -118,11 +113,11 @@ func (t *teamAPI) postUpdateTeam(w http.ResponseWriter, r *http.Request) {
 	jobID, err := t.jobEngine.Queue(jobs.NewMatchesSyncJob(teamID, requestID))
 	if err != nil {
 		log.Error("failed to queue team update", zap.Error(err))
-		res.ErrInternalServer("failed to queue team update", err)
+		res.R(w, r, res.ErrInternalServer("failed to queue team update", err))
 		return
 	}
 	log.Info("update queued", zap.String("job.id", jobID))
 
-	res.MsgOK("team update queued",
-		"job_id", jobID)
+	res.R(w, r, res.MsgOK("team update queued",
+		"job_id", jobID))
 }

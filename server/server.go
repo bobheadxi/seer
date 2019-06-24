@@ -1,15 +1,14 @@
 package server
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/teris-io/shortid"
 	"go.uber.org/zap"
 
+	"go.bobheadxi.dev/res"
 	"go.bobheadxi.dev/seer/jobs"
 	"go.bobheadxi.dev/seer/riot"
 	"go.bobheadxi.dev/seer/store"
@@ -20,8 +19,9 @@ import (
 type Server struct {
 	l   *zap.Logger
 	mux *chi.Mux
+	srv *http.Server
 
-	jobEngine *jobs.Engine
+	jobsEngine jobs.Engine
 }
 
 // New instantiates a new server
@@ -32,52 +32,49 @@ func New(
 	jobsEngine jobs.Engine,
 ) (*Server, error) {
 	srv := &Server{
-		l:   l,
-		mux: &chi.Mux{},
+		l:          l,
+		srv:        &http.Server{},
+		jobsEngine: jobsEngine,
 	}
 
-	srv.mux.Use(
+	mux := chi.NewMux()
+	mux.Use(
 		middleware.Recoverer,
 		middleware.RequestID,
 		middleware.RealIP,
 		zhttp.NewMiddleware(l.Named("requests"), nil).Logger,
 	)
 
-	sid, err := shortid.New(1, shortid.DefaultABC, 2342)
-	if err != nil {
-		return nil, err
-	}
-	srv.mux.Route("/team", teamAPI{l.Named("teams"), riotAPI, backend, jobsEngine, sid}.Group)
+	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) { res.R(w, r, res.MsgOK("server online")) })
 
+	// TODO: hash of names instead of shortid?
+	teams := &teamAPI{l.Named("teams"), riotAPI, backend, jobsEngine}
+	mux.Route("/team", teams.Group)
+
+	srv.srv.Handler = mux
 	return srv, nil
 }
 
 // Start spins up the API server
-func (s *Server) Start(addr string) error {
+func (s *Server) Start(addr string, stop chan bool) error {
 	if addr == "" {
 		addr = ":8080"
 	}
 
-	// TODO background jobs here?
+	s.jobsEngine.Start()
 
-	serve := &http.Server{
-		Addr:    addr,
-		Handler: s.mux,
-	}
-	return serve.ListenAndServe()
+	s.srv.Addr = addr
+	go func() {
+		<-stop
+		s.Stop(context.Background())
+	}()
+	return s.srv.ListenAndServe()
 }
 
-func read(r *http.Request, out interface{}) error {
-	body, err := r.GetBody()
-	if err != nil {
-		return err
+// Stop shuts down this server and its associated resources
+func (s *Server) Stop(ctx context.Context) {
+	if err := s.srv.Shutdown(ctx); err != nil {
+		s.l.Error(err.Error())
 	}
-	defer body.Close()
-
-	data, err := ioutil.ReadAll(body)
-	if err != nil {
-		return err
-	}
-
-	return json.Unmarshal(data, out)
+	s.jobsEngine.Close()
 }
