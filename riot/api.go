@@ -19,11 +19,17 @@ type RegionalAPI interface {
 type (
 	// Summoner represents a user
 	Summoner struct {
+		AccountID     string `json:"accountId"`
 		Name          string `json:"name"`
 		SummonerLevel int    `json:"summonerLevel"`
 		ProfileIconID int    `json:"profileIconId"`
-		AccountID     string `json:"accountId"`
 		PlayerID      string `json:"id"`
+	}
+
+	// MatchSummoner represents a user in a match
+	MatchSummoner struct {
+		AccountID        string `json:"accountId"`
+		CurrentAccountID string `json:"currentAccountId,omitmepty"`
 	}
 
 	// Match represents a match overview
@@ -44,8 +50,8 @@ type (
 		QueueID               int   `json:"queueId"`
 		GameID                int64 `json:"gameId"`
 		ParticipantIdentities []struct {
-			Player        Summoner `json:"player"`
-			ParticipantID int      `json:"participantId"`
+			Player        MatchSummoner `json:"player"`
+			ParticipantID int           `json:"participantId"`
 		} `json:"participantIdentities"`
 		GameVersion string `json:"gameVersion"`
 		PlatformID  string `json:"platformId"`
