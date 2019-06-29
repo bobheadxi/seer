@@ -18,6 +18,7 @@ var (
 	dev      = flag.Bool("dev", os.Getenv("DEV") == "true", "toggle dev mode")
 	logPath  = flag.String("logpath", "", "path for log storage")
 	noJobsUI = flag.Bool("no-jobs-ui", false, "disable jobs UI")
+	apiPort  = flag.String("port", "8080", "port to serve Seer API on")
 )
 
 func main() {
@@ -66,7 +67,7 @@ func main() {
 	}
 
 	log.Info("spinning up server")
-	if err := srv.Start(":8080", newStopper()); err != nil {
+	if err := srv.Start(":"+*apiPort, newStopper()); err != nil {
 		log.Fatal(err.Error())
 	}
 }
