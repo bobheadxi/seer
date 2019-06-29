@@ -11,7 +11,7 @@ import (
 // Config exposes server configuration
 type Config struct {
 	RedisNamespace string
-	RedisAddr      string
+	RedisURL       string
 
 	RiotAPIToken string // TODO: need a mechanism to update this
 
@@ -23,7 +23,7 @@ type Config struct {
 func NewEnvConfig() Config {
 	return Config{
 		RedisNamespace: os.Getenv("REDIS_NAMESPACE"),
-		RedisAddr:      os.Getenv("REDIS_ADDR"),
+		RedisURL:       os.Getenv("REDIS_URL"),
 
 		RiotAPIToken: os.Getenv("RIOT_API_TOKEN"),
 		GitHubToken:  os.Getenv("GITHUB_TOKEN"),
@@ -48,7 +48,7 @@ func (c *Config) DefaultRedisPool(opts ...redis.DialOption) *redis.Pool {
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
 		// Dial or DialContext must be set. When both are set, DialContext takes precedence over Dial.
-		Dial: func() (redis.Conn, error) { return redis.Dial("tcp", c.RedisAddr, opts...) },
+		Dial: func() (redis.Conn, error) { return redis.Dial("tcp", c.RedisURL, opts...) },
 	}
 }
 
