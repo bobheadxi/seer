@@ -11,6 +11,7 @@ require (
 	github.com/google/go-github/v26 v26.0.7
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron v1.2.0 // indirect
+	github.com/tkrajina/typescriptify-golang-structs v0.0.7 // indirect
 	go.bobheadxi.dev/res v0.2.0
 	go.bobheadxi.dev/zapx v0.4.0
 	go.uber.org/zap v1.10.0

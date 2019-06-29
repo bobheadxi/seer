@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.bobheadxi.dev/res"
+	"go.bobheadxi.dev/seer/config"
 	"go.bobheadxi.dev/seer/jobs"
 	"go.bobheadxi.dev/seer/riot"
 	"go.bobheadxi.dev/seer/store"
@@ -30,6 +31,7 @@ func New(
 	riotAPI riot.API,
 	backend store.Store,
 	jobsEngine jobs.Engine,
+	meta config.BuildMeta,
 ) (*Server, error) {
 	srv := &Server{
 		l:          l,
@@ -45,7 +47,10 @@ func New(
 		zhttp.NewMiddleware(l.Named("requests"), nil).Logger,
 	)
 
-	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) { res.R(w, r, res.MsgOK("server online")) })
+	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		res.R(w, r, res.MsgOK("server online",
+			"build.commit", meta.Commit))
+	})
 
 	// TODO: hash of names instead of shortid?
 	teams := &teamAPI{l.Named("teams"), riotAPI, backend, jobsEngine}

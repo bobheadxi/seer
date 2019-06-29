@@ -15,26 +15,35 @@ import (
 )
 
 var (
-	dev     = flag.Bool("dev", os.Getenv("DEV") == "true", "toggle dev mode")
-	logPath = flag.String("logpath", "", "path for log storage")
+	dev      = flag.Bool("dev", os.Getenv("DEV") == "true", "toggle dev mode")
+	logPath  = flag.String("logpath", "", "path for log storage")
+	noJobsUI = flag.Bool("no-jobs-ui", false, "disable jobs UI")
 )
 
 func main() {
+	// load up configuration
 	cfg := config.NewEnvConfig()
+	meta := config.NewBuildMeta()
 
+	// init logger
 	log, err := zapx.New(*logPath, *dev, func(cfg *zap.Config) error {
 		if *dev == true {
 			cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		}
 		return nil
-	})
+	}, zapx.WithFields(map[string]interface{}{
+		"build.commit": meta.Commit,
+	}))
 	if err != nil {
 		panic(err)
 	}
 	defer log.Sync()
 	log.Debug("configuration loaded", zap.Any("config", cfg))
 
-	go startJobsUI(cfg.RedisNamespace, cfg.DefaultRedisPool(), ":8081")
+	// spin up jobs manager UI
+	if !*noJobsUI {
+		go startJobsUI(cfg.RedisNamespace, cfg.DefaultRedisPool(), ":8081")
+	}
 
 	log.Info("instantiating dependencies")
 	rc, err := riot.NewClient(log.Named("riot"), cfg.RiotAPIToken)
@@ -51,7 +60,7 @@ func main() {
 	})
 
 	log.Info("creating server")
-	srv, err := server.New(log, rc, bs, je)
+	srv, err := server.New(log, rc, bs, je, meta)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

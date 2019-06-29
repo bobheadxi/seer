@@ -51,3 +51,12 @@ func (c *Config) DefaultRedisPool(opts ...redis.DialOption) *redis.Pool {
 		Dial: func() (redis.Conn, error) { return redis.Dial("tcp", c.RedisAddr, opts...) },
 	}
 }
+
+func firstOf(vars ...string) string {
+	for _, s := range vars {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}
