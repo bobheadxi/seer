@@ -11,7 +11,8 @@ import (
 // Config exposes server configuration
 type Config struct {
 	RedisNamespace string
-	RedisURL       string
+	RedisURL       string // redis conn string
+	RedisAddr      string
 
 	RiotAPIToken string // TODO: need a mechanism to update this
 
@@ -24,6 +25,7 @@ func NewEnvConfig() Config {
 	return Config{
 		RedisNamespace: os.Getenv("REDIS_NAMESPACE"),
 		RedisURL:       os.Getenv("REDIS_URL"),
+		RedisAddr:      os.Getenv("REDIS_ADDR"),
 
 		RiotAPIToken: os.Getenv("RIOT_API_TOKEN"),
 		GitHubToken:  os.Getenv("GITHUB_TOKEN"),
@@ -44,11 +46,14 @@ func (c *Config) GitHubAPITokenSource() oauth2.TokenSource {
 
 // DefaultRedisPool inits a default redis configuration
 func (c *Config) DefaultRedisPool(opts ...redis.DialOption) *redis.Pool {
+	dialFunc := func() (redis.Conn, error) { return redis.DialURL(c.RedisURL, opts...) }
+	if c.RedisAddr != "" {
+		dialFunc = func() (redis.Conn, error) { return redis.Dial("tcp", c.RedisAddr, opts...) }
+	}
 	return &redis.Pool{
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
-		// Dial or DialContext must be set. When both are set, DialContext takes precedence over Dial.
-		Dial: func() (redis.Conn, error) { return redis.Dial("tcp", c.RedisURL, opts...) },
+		Dial:        dialFunc,
 	}
 }
 
