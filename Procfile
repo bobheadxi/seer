@@ -1,1 +1,1 @@
-web: bin/timelines server -port $PORT
+web: bin/seer -port $PORT
