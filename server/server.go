@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
 	"go.bobheadxi.dev/res"
@@ -42,6 +43,14 @@ func New(
 	mux := chi.NewMux()
 	mux.Use(
 		middleware.Recoverer,
+		cors.New(cors.Options{
+			AllowedOrigins:   []string{"*"}, // TODO
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			ExposedHeaders:   []string{"Link"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		}).Handler,
 		middleware.RequestID,
 		middleware.RealIP,
 		zhttp.NewMiddleware(l.Named("requests"), nil).Logger,
