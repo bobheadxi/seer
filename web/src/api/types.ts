@@ -1,6 +1,6 @@
 
 export enum Region {
-  NA = "NA1",
+  NA = 'NA1',
 }
 
 export interface Team {
@@ -18,7 +18,7 @@ export interface Match {
   gameMode: string;
   mapId: number;
   gameType: string;
-  teams: Team[];
+  teams: MatchTeam[];
   participants: Participant[];
   gameDuration: number;
   gameCreation: number;
@@ -48,7 +48,7 @@ export interface Ban {
   championId: number;
 }
 
-export interface Team {
+export interface MatchTeam {
   firstDragon: boolean;
   bans: Ban[];
   firstInhibitor: boolean;
@@ -201,4 +201,3 @@ export interface Participant {
   championId: number;
   highestAchievedSeasonTier: string;
 }
-

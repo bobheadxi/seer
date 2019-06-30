@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 import { Region, Team, Match } from '@/api/types';
 
@@ -8,26 +8,30 @@ export class SeerAPI {
   constructor(addr: string) {
     this.net = axios.create({
       baseURL: addr,
-      timeout: 1000,
+      timeout: 5000,
+      responseType: 'json',
     });
   }
 
   async createTeam(region: Region, members: [string]): Promise<CreateTeamResponse> {
     const resp = await this.net.post('/team', {
-      region: region,
-      members: members,
-    })
-    return resp.data as CreateTeamResponse;
+      region,
+      members,
+    });
+    const { data } = resp.data;
+    return data as CreateTeamResponse;
   }
 
   async updateTeam(teamID: string): Promise<UpdateTeamResponse> {
-    const resp = await this.net.post(`/team/${teamID}`)
-    return resp.data as UpdateTeamResponse
+    const resp = await this.net.post(`/team/${teamID}`);
+    const { data } = resp.data;
+    return data as UpdateTeamResponse;
   }
 
   async getTeam(teamID: string): Promise<GetTeamResponse> {
     const resp = await this.net.get(`/team/${teamID}`);
-    return resp.data as GetTeamResponse;
+    const { data } = resp.data;
+    return data as GetTeamResponse;
   }
 }
 
