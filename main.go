@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"os"
 
 	"go.bobheadxi.dev/seer/config"
@@ -14,21 +13,18 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	dev      = flag.Bool("dev", os.Getenv("DEV") == "true", "toggle dev mode")
-	logPath  = flag.String("logpath", "", "path for log storage")
-	noJobsUI = flag.Bool("no-jobs-ui", false, "disable jobs UI")
-	apiPort  = flag.String("port", "8080", "port to serve Seer API on")
-)
-
 func main() {
 	// load up configuration
+	flags, err := config.LoadFlags(os.Args[1:])
+	if err != nil {
+		panic(err)
+	}
 	cfg := config.NewEnvConfig()
 	meta := config.NewBuildMeta()
 
 	// init logger
-	log, err := zapx.New(*logPath, *dev, func(cfg *zap.Config) error {
-		if *dev == true {
+	log, err := zapx.New(flags.LogPath, flags.Dev, func(cfg *zap.Config) error {
+		if flags.Dev == true {
 			cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		}
 		return nil
@@ -39,10 +35,15 @@ func main() {
 		panic(err)
 	}
 	defer log.Sync()
-	log.Debug("configuration loaded", zap.Any("config", cfg))
+
+	// report basic config
+	log.Info("configuration loaded",
+		zap.Any("config", cfg),
+		zap.Any("meta", meta),
+		zap.Any("flags", flags))
 
 	// spin up jobs manager UI
-	if !*noJobsUI {
+	if !flags.DisableJobsUI {
 		go startJobsUI(cfg.RedisNamespace, cfg.DefaultRedisPool(), ":8081")
 	}
 
@@ -66,8 +67,9 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	log.Info("spinning up server")
-	if err := srv.Start(":"+*apiPort, newStopper()); err != nil {
+	log.Info("spinning up server",
+		zap.String("port", flags.APIPort))
+	if err := srv.Start(":"+flags.APIPort, newStopper()); err != nil {
 		log.Fatal(err.Error())
 	}
 }
