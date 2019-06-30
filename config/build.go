@@ -15,7 +15,11 @@ type BuildMeta struct {
 // NewBuildMeta instantiates a new build metadata struct from the environment.
 // Currently leverages Heroku's Dyno Metadata: https://devcenter.heroku.com/articles/dyno-metadata
 func NewBuildMeta() BuildMeta {
+	c := firstOf(Commit, os.Getenv("HEROKU_SLUG_COMMIT"))
+	if len(c) > 8 {
+		c = c[:7]
+	}
 	return BuildMeta{
-		Commit: firstOf(Commit, os.Getenv("HEROKU_SLUG_COMMIT"))[:7],
+		Commit: c,
 	}
 }
