@@ -97,7 +97,9 @@ func (t *teamAPI) getTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info("team found")
+	log.Info("team found",
+		zap.Int("members", len(team.Members)),
+		zap.Int("matches", len(matches)))
 	res.R(w, r, res.MsgOK("team found",
 		"team", team,
 		"matches", matches))

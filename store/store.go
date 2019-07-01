@@ -12,8 +12,8 @@ import (
 
 // Team represents a team
 type Team struct {
-	Region  riot.Region
-	Members []*riot.Summoner
+	Region  riot.Region      `json:"region"`
+	Members []*riot.Summoner `json:"members"`
 }
 
 // GenerateTeamID generates a new team ID for this team based on its region and
@@ -30,7 +30,7 @@ func (t *Team) GenerateTeamID() string {
 
 // MatchData is a container for details about a match
 type MatchData struct {
-	Details *riot.MatchDetails
+	Details *riot.MatchDetails `json:"details"`
 }
 
 // Store defines the contract different storage backends for Seer should have
