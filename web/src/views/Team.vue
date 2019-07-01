@@ -13,7 +13,7 @@
     </div>
 
     <div v-if=error.occured>
-      Oops an error occured! {{ error.occured }}
+      Oops an error occured! {{ error.details }}
     </div>
 
     <div v-if=loading>

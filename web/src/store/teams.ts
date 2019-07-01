@@ -7,19 +7,19 @@ import { RootState } from '@/store/root';
 import { SeerAPI } from '@/api/api';
 import * as types from '@/api/types';
 
-// TODO NO MAPS???? UGHHHH
+// TODO NO MAPS????
 
 
 export interface TeamsState {
-  teams: Map<string, types.Team>;
-  matches: Map<string, [types.Match]>;
-  updateStatus: Map<string, any>;
+  teams: { id: string, data: types.Team }[];
+  matches: { id: string, data: [types.Match] }[];
+  updateStatus: { id: string, data: any }[];
 };
 
 const teamState: TeamsState = {
-  teams: new Map<string, types.Team>(),
-  matches: new Map<string, [types.Match]>(),
-  updateStatus: new Map<string, any>(),
+  teams: [],
+  matches: [],
+  updateStatus: [],
 };
 
 export enum Getters {
@@ -32,11 +32,20 @@ export enum Getters {
 const getterTree: GetterTree<TeamsState, RootState> = {
   [Getters.CLIENT]: (state, getters, rootState): SeerAPI => rootState.client,
 
-  [Getters.TEAM]: (state): ((teamID: string) => types.Team | undefined) => teamID => state.teams.get(teamID),
+  [Getters.TEAM]: (state): ((teamID: string) => types.Team | undefined) => (teamID) => {
+    const found = state.teams.find(v => v.id === teamID);
+    return found ? found.data : undefined;
+  },
 
-  [Getters.MATCHES]: (state): ((teamID: string) => [types.Match] | undefined) => teamID => state.matches.get(teamID),
+  [Getters.MATCHES]: (state): ((teamID: string) => [types.Match] | undefined) => (teamID) => {
+    const found = state.matches.find(v => v.id === teamID);
+    return found ? found.data : undefined;
+  },
 
-  [Getters.UPDATE_STATE]: (state): ((teamID: string) => any | undefined) => teamID => state.updateStatus.get(teamID),
+  [Getters.UPDATE_STATE]: (state): ((teamID: string) => any | undefined) => (teamID) => {
+    const found = state.updateStatus.find(v => v.id === teamID);
+    return found ? found.data : undefined;
+  },
 };
 
 export enum Actions {
@@ -71,15 +80,15 @@ const actionTree: ActionTree<TeamsState, RootState> = {
 
 const mutationTree: MutationTree<TeamsState> = {
   STORE_TEAM: (state, payload: { teamID: string, team: types.Team }) => {
-    Vue.set(state.teams, payload.teamID, payload.team);
+    state.teams.push({ id: payload.teamID, data: payload.team });
   },
 
   STORE_MATCHES: (state, payload: { teamID: string, matches: [types.Match] }) => {
-    Vue.set(state.matches, payload.teamID, payload.matches);
+    state.matches.push({ id: payload.teamID, data: payload.matches });
   },
 
   SET_TEAM_UPDATE_STATUS: (state, payload: { teamID: string, status: any }) => {
-    Vue.set(state.updateStatus, payload.teamID, payload.status);
+    state.updateStatus.push({ id: payload.teamID, data: payload.status });
   },
 };
 
