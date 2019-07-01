@@ -9,7 +9,7 @@
         <br />
         {{ team.Members }}
       </div>
-        <Matches team=teamID />
+      <Matches v-bind:teamID=teamID />
     </div>
 
     <div v-if=error.occured>

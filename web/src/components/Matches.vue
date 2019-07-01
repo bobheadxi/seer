@@ -3,7 +3,7 @@
     <div v-if=matches>
       <div v-for="m in matches" v-bind:key="m.gameId">
         <div>
-          {{ teamID }} {{ g.gameId }}
+          {{ teamID }} {{ m.details.gameId }} {{ m.details.participants }}
         </div>
       </div>
     </div>

@@ -9,6 +9,10 @@ export interface Team {
 }
 
 export interface Match {
+  details: MatchDetails;
+}
+
+export interface MatchDetails {
   seasonId: number;
   queueId: number;
   gameId: number;
