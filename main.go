@@ -23,14 +23,11 @@ func main() {
 	meta := config.NewBuildMeta()
 
 	// init logger
-	log, err := zapx.New(flags.LogPath, flags.Dev, func(cfg *zap.Config) error {
-		if flags.Dev == true {
-			cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-		}
-		return nil
-	}, zapx.WithFields(map[string]interface{}{
-		"build.commit": meta.Commit,
-	}))
+	log, err := zapx.New(flags.LogPath, flags.Dev,
+		zapx.WithDebug(flags.Dev),
+		zapx.WithFields(map[string]interface{}{
+			"build.commit": meta.Commit,
+		}))
 	if err != nil {
 		panic(err)
 	}
