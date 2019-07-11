@@ -1,22 +1,38 @@
-import Vue from 'vue';
 import {
-  Module, GetterTree, MutationTree, ActionTree,
+  Module, GetterTree, MutationTree, ActionTree, ActionContext,
 } from 'vuex';
 import { RootState } from '@/store/root';
 import Axios from 'axios';
 
-function getItemSpriteSource(sprite: string): string {
-  return `http://ddragon.leagueoflegends.com/cdn/6.24.1/img/sprite/${sprite}`;
+interface Versions {
+  item: string;
+  rune: string;
+  summoner: string;
+  champion: string;
+  mastery: string;
+  map: string;
 }
 
 export interface ItemData {
   name: string;
   description: string;
   plaintext: string;
-  image: ItemImage;
+  image: Image;
 }
 
-export interface ItemImage {
+export interface ChampData {
+  key: number;
+  title: string;
+  tags: [string];
+  image: Image;
+}
+
+export interface RuneData {
+
+}
+
+export interface Image {
+  full: string;
   sprite: string;
   group: string;
   x: number;
@@ -26,40 +42,74 @@ export interface ItemImage {
 }
 
 export interface LeagueMetadataState {
+  version: string;
+  downloaded: string;
   items: { [id: number]: ItemData };
+  champs: { [name: string]: ChampData };
 };
 
 const leagueMetadataState: LeagueMetadataState = {
+  version: '',
+  downloaded: '',
   items: {},
+  champs: {},
 };
 
 export enum LeagueGetters {
   ITEM = 'ITEM',
+  ITEM_SPRITE = 'ITEM_SPRITE',
 }
 
 const getterTree: GetterTree<LeagueMetadataState, RootState> = {
   [LeagueGetters.ITEM]: (state): ((item: number) => ItemData | undefined) => item => state.items[item],
+  [LeagueGetters.ITEM_SPRITE]: (state): ((item: number) => string | undefined) => (item) => {
+    const i = state.items[item];
+    return `http://ddragon.leagueoflegends.com/cdn/${state.version}/img/sprite/${i.image.sprite}`;
+  },
 };
 
+async function getAndCommit(context: ActionContext<LeagueMetadataState, RootState>, mutation: string, source: string, path?: string): Promise<any> {
+  const resp = await Axios.get(source);
+  let { data } = resp.data;
+  if (path) data = data[path];
+  console.debug(`fetched data for ${mutation}`, { found: data });
+  context.commit(mutation, data);
+  return data;
+}
+
 export enum LeagueActions {
-  DOWNLOAD_ITEMS = 'DOWNLOAD_ITEMS',
+  DOWNLOAD_METADATA = 'DOWNLOAD_METADATA',
 }
 
 const actionTree: ActionTree<LeagueMetadataState, RootState> = {
-  [LeagueActions.DOWNLOAD_ITEMS]: async (context, force = false) => {
-    if (context.state.items && !force) return;
+  [LeagueActions.DOWNLOAD_METADATA]: async (context, force = true) => {
+    const version = await getAndCommit(context, 'SET_VERSION', 'https://ddragon.leagueoflegends.com/realms/na.json', 'dd');
+    if (context.state.downloaded === version && !force) return;
 
-    const resp = await Axios.get('http://ddragon.leagueoflegends.com/cdn/6.24.1/data/en_US/item.json');
-    const { data } = resp.data;
-    context.commit('STORE_ITEMS', data);
+    context.dispatch('DOWNLOAD_DATA_FOR_VERSION', version);
+  },
+
+  DOWNLOAD_DATA_FOR_VERSIONS: async (context, version) => {
+    console.debug(`fetching v${version} data`);
+    await getAndCommit(context, 'STORE_ITEMS', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_GB/item.json`);
+    await getAndCommit(context, 'STORE_CHAMPS', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_GB/champion.json`);
+    await getAndCommit(context, 'STORE_RUNES', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/runesReforged.json`);
+    await getAndCommit(context, 'STORE_SUMMONERS', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_GB/summoner.json`);
+    context.commit('SET_DOWNLOADED', { version });
   },
 };
 
 const mutationTree: MutationTree<LeagueMetadataState> = {
-  STORE_ITEMS: (state, payload: Map<number, ItemData>) => {
-    Vue.set(state, 'items', payload);
-    console.debug('stored item metadata', { payload });
-  },
+  /* eslint-disable no-param-reassign */
+  SET_VERSION: (state, payload: { version: string }) => { state.version = payload.version; },
+  SET_DOWNLOADED: (state, payload: { version: string }) => { state.downloaded = payload.version; },
+  STORE_ITEMS: (state, payload) => { state.items = payload; },
+  STORE_CHAMPS: (state, payload) => { state.champs = payload; },
+
+  // TODO
+  STORE_RUNES: (state, payload) => { },
+  STORE_SUMMONERS: (state, payload) => { },
+  /* eslint-enable no-param-reassign */
 };
 
 const leagues: Module<LeagueMetadataState, RootState> = {

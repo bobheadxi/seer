@@ -1,4 +1,3 @@
-import Vue from 'vue';
 import {
   Module, GetterTree, MutationTree, ActionTree,
 } from 'vuex';

@@ -17,7 +17,7 @@ export interface MatchDetails {
   queueId: number;
   gameId: number;
   participantIdentities: ParticipantIdentity[];
-  gameVersion: string;
+  gameVersion: string; // TODO: reconcile with metadata version?
   platformId: string;
   gameMode: string;
   mapId: number;

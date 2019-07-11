@@ -44,8 +44,8 @@ export default class Team extends Vue {
   @Action(TeamActions.FETCH_TEAM, { namespace: Namespace.TEAMS })
   private fetchTeam!: (params: any) => void;
 
-  @Action(LeagueActions.DOWNLOAD_ITEMS, { namespace: Namespace.LEAGUE })
-  private fetchItemData!: (params: any) => void;
+  @Action(LeagueActions.DOWNLOAD_METADATA, { namespace: Namespace.LEAGUE })
+  private fetchLeagueData!: (params: any) => void;
 
   @Getter(TeamGetters.TEAM, { namespace: Namespace.TEAMS })
   private teamData!: (id: string) => types.Team;
@@ -64,7 +64,7 @@ export default class Team extends Vue {
   async mounted() {
     try {
       await this.fetchTeam({ teamID: this.teamID });
-      await this.fetchItemData({});
+      await this.fetchLeagueData({});
     } catch (e) {
       this.error = { occured: true, details: e };
     }
