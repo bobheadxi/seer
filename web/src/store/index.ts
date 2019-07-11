@@ -1,5 +1,6 @@
 import Vue from 'vue';
-import Vuex, { StoreOptions, GetterTree } from 'vuex';
+import Vuex, { StoreOptions } from 'vuex';
+import createPersistedState from 'vuex-persistedstate';
 
 import { SeerAPI } from '@/api/api';
 import { RootState } from '@/store/root';
@@ -22,6 +23,9 @@ const store: StoreOptions<RootState> = {
     [Namespace.TEAMS]: teams,
     [Namespace.LEAGUE]: league,
   },
+  plugins: [
+    createPersistedState(),
+  ],
 };
 
 export default new Vuex.Store<RootState>(store);
