@@ -10,3 +10,7 @@ typescript:
 .PHONY: lint
 lint:
 	./.scripts/lint.sh
+
+.PHONY: web
+web:
+	cd web ; npm run serve:prod

@@ -7,9 +7,6 @@ import { RootState } from '@/store/root';
 import { SeerAPI } from '@/api/api';
 import * as types from '@/api/types';
 
-// TODO NO MAPS????
-
-
 export interface TeamsState {
   teams: { id: string, data: types.Team }[];
   matches: { id: string, data: [types.Match] }[];
@@ -22,7 +19,7 @@ const teamState: TeamsState = {
   updateStatus: [],
 };
 
-export enum Getters {
+export enum TeamGetters {
   CLIENT = 'CLIENT',
   TEAM = 'TEAM',
   MATCHES = 'MATCHES',
@@ -30,47 +27,49 @@ export enum Getters {
 }
 
 const getterTree: GetterTree<TeamsState, RootState> = {
-  [Getters.CLIENT]: (state, getters, rootState): SeerAPI => rootState.client,
+  [TeamGetters.CLIENT]: (state, getters, rootState): SeerAPI => rootState.client,
 
-  [Getters.TEAM]: (state): ((teamID: string) => types.Team | undefined) => (teamID) => {
+  [TeamGetters.TEAM]: (state): ((teamID: string) => types.Team | undefined) => (teamID) => {
     const found = state.teams.find(v => v.id === teamID);
     return found ? found.data : undefined;
   },
 
-  [Getters.MATCHES]: (state): ((teamID: string) => [types.Match] | undefined) => (teamID) => {
+  [TeamGetters.MATCHES]: (state): ((teamID: string) => [types.Match] | undefined) => (teamID) => {
     const found = state.matches.find(v => v.id === teamID);
     return found ? found.data : undefined;
   },
 
-  [Getters.UPDATE_STATE]: (state): ((teamID: string) => any | undefined) => (teamID) => {
+  [TeamGetters.UPDATE_STATE]: (state): ((teamID: string) => any | undefined) => (teamID) => {
     const found = state.updateStatus.find(v => v.id === teamID);
     return found ? found.data : undefined;
   },
 };
 
-export enum Actions {
+export enum TeamActions {
   CREATE_TEAM = 'CREATE_TEAM',
   FETCH_TEAM = 'FETCH_TEAM',
   UPDATE_TEAM = 'UPDATE_TEAM',
 }
 
 const actionTree: ActionTree<TeamsState, RootState> = {
-  [Actions.CREATE_TEAM]: async (context, payload: { region: types.Region, members: [string] }) => {
+  [TeamActions.CREATE_TEAM]: async (context, payload: { region: types.Region, members: [string] }) => {
     const { client } = context.rootState;
     const { region, members } = payload;
     await client.createTeam(region, members);
   },
 
-  [Actions.FETCH_TEAM]: async (context, payload: { teamID: string }) => {
+  [TeamActions.FETCH_TEAM]: async (context, payload: { teamID: string, force?: boolean }) => {
+    const { teamID, force } = payload;
+    if (context.state.teams.find(v => v.id === teamID) && !force) return;
+
     const { client } = context.rootState;
-    const { teamID } = payload;
     const { team, matches } = await client.getTeam(teamID);
     context.commit('STORE_TEAM', { teamID, team });
     context.commit('STORE_MATCHES', { teamID, matches });
-    console.log('stored', { teamID, team, matches });
+    console.debug('stored team and matches', { teamID, team, matches });
   },
 
-  [Actions.UPDATE_TEAM]: async (context, payload: { teamID: string }) => {
+  [TeamActions.UPDATE_TEAM]: async (context, payload: { teamID: string }) => {
     const { client } = context.rootState;
     const { teamID } = payload;
     const resp = await client.updateTeam(teamID);

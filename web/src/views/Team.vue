@@ -31,10 +31,9 @@ import Matches from '@/components/Matches.vue';
 
 import { ErrorState } from '../primitives';
 import { Namespace } from '../store';
-import { TeamsState, Actions, Getters } from '../store/teams';
+import { TeamsState, TeamActions, TeamGetters } from '../store/teams';
+import { LeagueActions } from '../store/league';
 import * as types from '../api/types';
-
-const namespace = Namespace.TEAMS;
 
 @Component({
   components: {
@@ -42,9 +41,14 @@ const namespace = Namespace.TEAMS;
   },
 })
 export default class Team extends Vue {
-  @Action(Actions.FETCH_TEAM, { namespace }) private fetchTeam!: (params: any) => void;
+  @Action(TeamActions.FETCH_TEAM, { namespace: Namespace.TEAMS })
+  private fetchTeam!: (params: any) => void;
 
-  @Getter(Getters.TEAM, { namespace }) private teamData!: (id: string) => types.Team;
+  @Action(LeagueActions.DOWNLOAD_ITEMS, { namespace: Namespace.LEAGUE })
+  private fetchItemData!: (params: any) => void;
+
+  @Getter(TeamGetters.TEAM, { namespace: Namespace.TEAMS })
+  private teamData!: (id: string) => types.Team;
 
   error: ErrorState;
 
@@ -60,13 +64,12 @@ export default class Team extends Vue {
   async mounted() {
     try {
       await this.fetchTeam({ teamID: this.teamID });
+      await this.fetchItemData({});
     } catch (e) {
       this.error = { occured: true, details: e };
     }
     this.loading = false;
-    console.debug('loaded!', this.teamID, this.team);
   }
-
 
   get team(): types.Team | undefined {
     return this.teamData(this.teamID);
