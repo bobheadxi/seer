@@ -39,9 +39,9 @@ func main() {
 		zap.Any("meta", meta),
 		zap.Any("flags", flags))
 
-	// spin up jobs manager UI
-	if !flags.DisableJobsUI {
-		go startJobsUI(cfg.RedisNamespace, cfg.DefaultRedisPool(), ":8081")
+	// spin up jobs manager UI if configured to do so
+	if flags.JobsUIPort != "" {
+		go startJobsUI(cfg.RedisNamespace, cfg.DefaultRedisPool(), ":"+flags.JobsUIPort)
 	}
 
 	log.Info("instantiating dependencies")
