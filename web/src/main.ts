@@ -11,4 +11,8 @@ new Vue({
   router,
   store,
   render: h => h(App),
+  errorCaptured: (err, vm, info) => {
+    console.error({ err, vm, info });
+    return false;
+  },
 }).$mount('#app');
