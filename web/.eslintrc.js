@@ -13,6 +13,7 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-extra-semi': 'off',
     'max-len': 'off',
+    'lines-between-class-members': 'off',
     'import/prefer-default-export': 'off',
   },
   parserOptions: {
