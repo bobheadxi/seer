@@ -121,5 +121,6 @@ func (t *teamAPI) postUpdateTeam(w http.ResponseWriter, r *http.Request) {
 	log.Info("update queued", zap.String("job.id", jobID))
 
 	res.R(w, r, res.MsgOK("team update queued",
+		"status", jobs.StatusQueued, // TODO: more robust job check system
 		"jobID", jobID))
 }
