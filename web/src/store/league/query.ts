@@ -1,21 +1,13 @@
 import * as LeagueTypes from './types';
 
-export function findChamp(
-  champs: { [name: string]: LeagueTypes.ChampData },
-  id: string,
-): LeagueTypes.ChampData | undefined {
-  const found = Object.keys(champs)
-    .find(name => champs[name].key === id);
-  if (!found) return undefined;
-  return champs[found];
-}
+interface KeyedObject { key: string }
 
-export function findSpell(
-  spells: { [name: string]: LeagueTypes.SpellData },
-  id: string,
-): LeagueTypes.SpellData | undefined {
-  const found = Object.keys(spells)
-    .find(name => spells[name].key === id);
+export function findByKey<T extends KeyedObject>(
+  src: { [name: string]: T },
+  match: string,
+): T | undefined {
+  const found = Object.keys(src)
+    .find(name => src[name].key === match);
   if (!found) return undefined;
-  return spells[found];
+  return src[found];
 }

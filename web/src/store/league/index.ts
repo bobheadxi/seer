@@ -4,16 +4,18 @@ import {
 import Axios from 'axios';
 
 import { RootState } from '@/store/root';
-import * as LeagueTypes from './types';
-import { findChamp, findSpell } from './query';
+import {
+  ItemData, ChampData, RunesData, SpellData,
+} from './types';
+import { findByKey } from './query';
 
 export interface LeagueMetadataState {
   version: string;
   downloaded: string;
-  items: { [id: number]: LeagueTypes.ItemData };
-  champs: { [name: string]: LeagueTypes.ChampData };
-  runes: LeagueTypes.RunesData[];
-  spells: { [name: string]: LeagueTypes.SpellData };
+  items: { [id: number]: ItemData };
+  champs: { [name: string]: ChampData };
+  runes: RunesData[];
+  spells: { [name: string]: SpellData };
 };
 
 const leagueMetadataState: LeagueMetadataState = {
@@ -38,7 +40,7 @@ export enum LeagueGetters {
 }
 
 const getterTree: GetterTree<LeagueMetadataState, RootState> = {
-  [LeagueGetters.ITEM]: (state): IDGetter<LeagueTypes.ItemData> => item => state.items[item],
+  [LeagueGetters.ITEM]: (state): IDGetter<ItemData> => item => state.items[item],
   [LeagueGetters.ITEM_ICON]: (state): IDGetter<string> => (item) => {
     const { version } = state;
     return `http://ddragon.leagueoflegends.com/cdn/${version}/img/item/${item}.png`;
@@ -49,19 +51,19 @@ const getterTree: GetterTree<LeagueMetadataState, RootState> = {
     return `http://ddragon.leagueoflegends.com/cdn/${version}/img/sprite/${i.image.sprite}`;
   },
 
-  [LeagueGetters.CHAMP]: (state): IDGetter<LeagueTypes.ChampData> => id => findChamp(state.champs, id.toString()),
+  [LeagueGetters.CHAMP]: (state): IDGetter<ChampData> => id => findByKey<ChampData>(state.champs, id.toString()),
   [LeagueGetters.CHAMP_ICON]: (state): IDGetter<string> => (id) => {
     const { version } = state;
-    const champ = findChamp(state.champs, id.toString());
+    const champ = findByKey<ChampData>(state.champs, id.toString());
     if (!champ) return '';
     return `http://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.name.replace(' ', '')}.png`;
   },
   // TODO: sprites
 
-  [LeagueGetters.RUNES]: (state): IDGetter<LeagueTypes.RunesData> => perk => state.runes.find(v => v.id === perk),
+  [LeagueGetters.RUNES]: (state): IDGetter<RunesData> => perk => state.runes.find(v => v.id === perk),
   // TODO: icons, sprites
 
-  [LeagueGetters.SPELL]: (state): IDGetter<LeagueTypes.SpellData> => spell => findSpell(state.spells, spell.toString()),
+  [LeagueGetters.SPELL]: (state): IDGetter<SpellData> => spell => findByKey<SpellData>(state.spells, spell.toString()),
   // TODO: icons, spirtes
 };
 
