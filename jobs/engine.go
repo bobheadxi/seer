@@ -6,9 +6,10 @@ import (
 
 	"github.com/gocraft/work"
 	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
+
 	"go.bobheadxi.dev/seer/riot"
 	"go.bobheadxi.dev/seer/store"
-	"go.uber.org/zap"
 )
 
 // Engine is the contract for managing job execution
@@ -36,7 +37,11 @@ func NewJobsEngine(l *zap.Logger, app string, redisPool *redis.Pool, b *BaseJobC
 	pool := work.NewWorkerPool(BaseJobContext{}, uint(runtime.NumCPU()), app, redisPool)
 
 	matchesSync := &matchesSyncContext{l.Named("matches_sync"), b}
-	pool.Job(jobMatchesSync, matchesSync.Run)
+	pool.JobWithOptions(jobMatchesSync, work.JobOptions{
+		MaxFails: 3,
+		// TODO: create backoff calculator that checks for rate limits
+		// Backoff:
+	}, matchesSync.Run)
 
 	return &engine{
 		l:     l,
