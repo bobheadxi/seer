@@ -1,6 +1,7 @@
 
+// TODO: find good way to hide the region number suffix
 export enum Region {
-  NA = 'NA1',
+  NA1 = 'NA1',
 }
 
 export interface Team {

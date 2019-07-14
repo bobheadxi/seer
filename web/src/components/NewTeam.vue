@@ -6,7 +6,7 @@
         <p>
           <label for="inputRegion">Region:</label>
           <select id="inputRegion" v-model=inputRegion>
-            <option v-for="r in regions" v-bind:key="r" v-bind:selected="r === 'NA'">
+            <option v-for="r in regions" v-bind:key="r">
               {{r}}
             </option>
           </select>
@@ -62,7 +62,7 @@ const teamsSpace = { namespace: Namespace.TEAMS };
 
 @Component
 export default class NewTeam extends Vue {
-  inputRegion: Region = Region.NA;
+  inputRegion: Region = Region.NA1;
   inputMembers: (string | null)[] = [null, null, null, null, null];
   data: {
     createdTeam?: CreateTeamResponse,
@@ -96,7 +96,7 @@ export default class NewTeam extends Vue {
   }
 
   resetForm() {
-    this.inputRegion = Region.NA;
+    this.inputRegion = Region.NA1;
     this.inputMembers = [null, null, null, null, null];
   }
 

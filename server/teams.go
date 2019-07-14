@@ -81,7 +81,7 @@ func (t *teamAPI) postTeam(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("team stored")
 	res.R(w, r, res.MsgOK("team created",
-		"team.id", teamID))
+		"teamID", teamID))
 }
 
 func (t *teamAPI) getTeam(w http.ResponseWriter, r *http.Request) {
@@ -121,5 +121,5 @@ func (t *teamAPI) postUpdateTeam(w http.ResponseWriter, r *http.Request) {
 	log.Info("update queued", zap.String("job.id", jobID))
 
 	res.R(w, r, res.MsgOK("team update queued",
-		"job_id", jobID))
+		"jobID", jobID))
 }
