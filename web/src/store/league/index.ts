@@ -56,7 +56,7 @@ const getterTree: GetterTree<LeagueMetadataState, RootState> = {
     const { version } = state;
     const champ = findByKey<ChampData>(state.champs, id.toString());
     if (!champ) return '';
-    return `http://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.name.replace(' ', '')}.png`;
+    return `http://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.image.full}`;
   },
   // TODO: sprites
 
@@ -86,8 +86,14 @@ export enum LeagueActions {
 }
 
 const actionTree: ActionTree<LeagueMetadataState, RootState> = {
-  [LeagueActions.DOWNLOAD_METADATA]: async (context, force = true) => {
+  [LeagueActions.DOWNLOAD_METADATA]: async (context, { force = false }) => {
     const version = await getAndCommit(context, 'SET_VERSION', 'https://ddragon.leagueoflegends.com/realms/na.json', 'dd');
+    console.debug('checking league metadata', {
+      requiredVersion: version,
+      downloadedVersion: context.state.downloaded,
+      needsUpdate: context.state.downloaded !== version,
+      forceUpdate: force,
+    });
     if (context.state.downloaded === version && !force) return;
 
     context.dispatch('DOWNLOAD_DATA_FOR_VERSION', version);
@@ -105,7 +111,7 @@ const actionTree: ActionTree<LeagueMetadataState, RootState> = {
 
 const mutationTree: MutationTree<LeagueMetadataState> = {
   /* eslint-disable no-param-reassign */
-  SET_VERSION: (state, version) => { state.version = version; console.debug('downloaded version set', state.version); },
+  SET_VERSION: (state, version) => { state.version = version; },
   SET_DOWNLOADED: (state, payload: { version: string }) => { state.downloaded = payload.version; },
   STORE_ITEMS: (state, payload) => { state.items = payload; },
   STORE_CHAMPS: (state, payload) => { state.champs = payload; },
