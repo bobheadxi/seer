@@ -14,6 +14,7 @@ module.exports = {
     'no-extra-semi': 'off',
     'max-len': 'off',
     'lines-between-class-members': 'off',
+    'class-methods-use-this': 'off',
     'import/prefer-default-export': 'off',
   },
   parserOptions: {

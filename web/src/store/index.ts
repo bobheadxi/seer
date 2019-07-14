@@ -2,7 +2,7 @@ import Vue from 'vue';
 import Vuex, { StoreOptions } from 'vuex';
 import createPersistedState from 'vuex-persistedstate';
 
-import { SeerAPI } from '@/api/api';
+import { SeerAPI } from '@/api';
 import { RootState } from '@/store/root';
 import teams from '@/store/teams';
 import league from '@/store/league';
@@ -24,7 +24,9 @@ const store: StoreOptions<RootState> = {
     [Namespace.LEAGUE]: league,
   },
   plugins: [
-    createPersistedState(),
+    createPersistedState({
+      paths: [Namespace.LEAGUE, Namespace.TEAMS],
+    }),
   ],
 };
 

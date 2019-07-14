@@ -31,9 +31,14 @@ import Matches from '@/components/Matches.vue';
 
 import { ErrorState } from '../primitives';
 import { Namespace } from '../store';
-import { TeamsState, TeamActions, TeamGetters } from '../store/teams';
+import {
+  TeamsState, TeamActions, TeamGetters, FetchTeamPayload,
+} from '../store/teams';
 import { LeagueActions } from '../store/league';
 import * as types from '../api/types';
+
+const teamsSpace = { namespace: Namespace.TEAMS };
+const leagueSpace = { namespace: Namespace.LEAGUE };
 
 @Component({
   components: {
@@ -41,24 +46,17 @@ import * as types from '../api/types';
   },
 })
 export default class Team extends Vue {
-  @Action(TeamActions.FETCH_TEAM, { namespace: Namespace.TEAMS })
-  private fetchTeam!: (params: any) => void;
+  @Action(TeamActions.FETCH_TEAM, teamsSpace)
+  private fetchTeam!: (params: FetchTeamPayload) => void;
 
-  @Action(LeagueActions.DOWNLOAD_METADATA, { namespace: Namespace.LEAGUE })
+  @Action(LeagueActions.DOWNLOAD_METADATA, leagueSpace)
   private fetchLeagueData!: (params: any) => void;
 
   @Getter(TeamGetters.TEAM, { namespace: Namespace.TEAMS })
   private teamData!: (id: string) => types.Team;
 
-  error: ErrorState;
-
-  loading: boolean;
-
-  constructor() {
-    super();
-    this.loading = true;
-    this.error = { occured: false };
-  };
+  error: ErrorState = { occured: false };
+  loading: boolean = true;
 
   // fetch on mount
   async mounted() {

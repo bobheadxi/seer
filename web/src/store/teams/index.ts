@@ -3,7 +3,7 @@ import {
 } from 'vuex';
 import { RootState } from '@/store/root';
 
-import { SeerAPI } from '@/api/api';
+import { SeerAPI, CreateTeamResponse } from '@/api';
 import * as types from '@/api/types';
 
 export interface TeamsState {
@@ -50,14 +50,19 @@ export enum TeamActions {
   UPDATE_TEAM = 'UPDATE_TEAM',
 }
 
+export interface CreateTeamPayload { region: types.Region, members: string[] }
+export interface FetchTeamPayload { teamID: string, force?: boolean }
+export interface UpdateTeamPayload { teamID: string }
+
 const actionTree: ActionTree<TeamsState, RootState> = {
-  [TeamActions.CREATE_TEAM]: async (context, payload: { region: types.Region, members: [string] }) => {
+  [TeamActions.CREATE_TEAM]: async (context, payload: CreateTeamPayload): Promise<CreateTeamResponse> => {
     const { client } = context.rootState;
     const { region, members } = payload;
-    await client.createTeam(region, members);
+    const resp = await client.createTeam(region, members);
+    return resp;
   },
 
-  [TeamActions.FETCH_TEAM]: async (context, payload: { teamID: string, force?: boolean }) => {
+  [TeamActions.FETCH_TEAM]: async (context, payload: FetchTeamPayload) => {
     const { teamID, force } = payload;
     if (context.state.teams.find(v => v.id === teamID) && !force) return;
 
@@ -68,7 +73,7 @@ const actionTree: ActionTree<TeamsState, RootState> = {
     console.debug('stored team and matches', { teamID, team, matches });
   },
 
-  [TeamActions.UPDATE_TEAM]: async (context, payload: { teamID: string }) => {
+  [TeamActions.UPDATE_TEAM]: async (context, payload: UpdateTeamPayload) => {
     const { client } = context.rootState;
     const { teamID } = payload;
     const resp = await client.updateTeam(teamID);

@@ -1,3 +1,4 @@
+HEROKU_APP=seer-engine
 
 all:
 	rm -rf seer
@@ -18,3 +19,14 @@ web:
 .PHONY: server
 server:
 	docker-compose up
+
+# https://developer.riotgames.com/
+.PHONY: riot-token
+riot-token:
+	heroku config:set -a $(HEROKU_APP) RIOT_API_TOKEN=$(RIOT_API_TOKEN)
+
+.PHONY: check-server
+check-server:
+	@heroku apps:info --app $(HEROKU_APP)
+	@echo '=== server status'
+	@curl https://$(HEROKU_APP).herokuapp.com/status

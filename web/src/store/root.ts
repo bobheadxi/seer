@@ -1,4 +1,4 @@
-import { SeerAPI } from '@/api/api';
+import { SeerAPI } from '@/api';
 
 export interface RootState {
   version: string;
