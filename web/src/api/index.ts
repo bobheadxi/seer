@@ -55,9 +55,9 @@ export class SeerAPI {
   }
 
   async updateTeam(teamID: string): Promise<UpdateTeamResponse> {
-    console.debug('making POST /team/{teamID} request', { teamID });
+    console.debug('making POST /team/update/{teamID} request', { teamID });
     try {
-      const resp = await this.net.post(`/team/${teamID}`);
+      const resp = await this.net.post(`/team/update/${teamID}`);
       const { data } = resp.data;
       return data as UpdateTeamResponse;
     } catch (e) {
@@ -83,6 +83,7 @@ export interface CreateTeamResponse {
 
 export interface UpdateTeamResponse {
   status: string;
+  jobID: string;
 }
 
 export interface GetTeamResponse {

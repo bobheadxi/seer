@@ -10,6 +10,13 @@
         {{ team.Members }}
       </div>
       <Matches v-bind:teamID=teamID />
+
+      <div v-if=updateTriggered>
+        Matches sync queued
+      </div>
+      <button v-if=!updateTriggered v-on:click="syncMatches();">
+        Sync Matches
+      </button>
     </div>
 
     <div v-if=error.occured>
@@ -32,7 +39,7 @@ import Matches from '@/components/Matches.vue';
 import { ErrorState } from '../primitives';
 import { Namespace } from '../store';
 import {
-  TeamsState, TeamActions, TeamGetters, FetchTeamPayload,
+  TeamsState, TeamActions, TeamGetters, FetchTeamPayload, UpdateTeamPayload,
 } from '../store/teams';
 import { LeagueActions } from '../store/league';
 import * as types from '../api/types';
@@ -48,6 +55,8 @@ const leagueSpace = { namespace: Namespace.LEAGUE };
 export default class Team extends Vue {
   @Action(TeamActions.FETCH_TEAM, teamsSpace)
   private fetchTeam!: (params: FetchTeamPayload) => void;
+  @Action(TeamActions.UPDATE_TEAM, teamsSpace)
+  private updateTeam!: (params: UpdateTeamPayload) => void;
 
   @Action(LeagueActions.DOWNLOAD_METADATA, leagueSpace)
   private fetchLeagueData!: (params: any) => void;
@@ -57,6 +66,7 @@ export default class Team extends Vue {
 
   error: ErrorState = { occured: false };
   loading: boolean = true;
+  updateTriggered: boolean = false;
 
   // fetch on mount
   async mounted() {
@@ -75,6 +85,17 @@ export default class Team extends Vue {
 
   get teamID(): string {
     return this.$route.params.team;
+  }
+
+  syncMatches() {
+    this.updateTriggered = true;
+    this.error = { occured: false };
+    try {
+      this.updateTeam({ teamID: this.teamID });
+    } catch (e) {
+      this.error = { occured: true, details: e };
+      this.updateTriggered = false;
+    }
   }
 }
 
