@@ -1,16 +1,13 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"os"
 
-	"go.bobheadxi.dev/seer/config"
-	"go.bobheadxi.dev/seer/jobs"
-	"go.bobheadxi.dev/seer/riot"
-	"go.bobheadxi.dev/seer/server"
-	"go.bobheadxi.dev/seer/store"
-	"go.bobheadxi.dev/zapx"
 	"go.uber.org/zap"
+
+	"go.bobheadxi.dev/seer/config"
+	"go.bobheadxi.dev/zapx"
 )
 
 func main() {
@@ -39,34 +36,21 @@ func main() {
 		zap.Any("meta", meta),
 		zap.Any("flags", flags))
 
-	// spin up jobs manager UI if configured to do so
-	if flags.JobsUIPort != "" {
-		go startJobsUI(cfg.RedisNamespace, cfg.DefaultRedisPool(), ":"+flags.JobsUIPort)
-	}
-
-	log.Info("instantiating dependencies")
-	rc, err := riot.NewClient(log.Named("riot"), cfg.RiotAPIToken)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	bs, err := store.NewGitHubStore(context.Background(), log, cfg.GitHubAPITokenSource(), cfg.GitHubStoreRepo)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	je := jobs.NewJobsEngine(log, cfg.RedisNamespace, cfg.DefaultRedisPool(), &jobs.BaseJobContext{
-		RiotAPI: rc,
-		Store:   bs,
-	})
-
-	log.Info("creating server")
-	srv, err := server.New(log, rc, bs, je, meta)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	log.Info("spinning up server",
-		zap.String("port", flags.APIPort))
-	if err := srv.Start(":"+flags.APIPort, newStopper()); err != nil {
-		log.Fatal(err.Error())
+	// handle any special operational mode
+	switch flags.Mode {
+	case "jobs-ui":
+		if flags.JobsUIPort == "" {
+			flags.JobsUIPort = "8081"
+		}
+		startJobsUI(
+			log.Named("jobs_ui"),
+			cfg.RedisNamespace,
+			cfg.DefaultRedisPool(),
+			":"+flags.JobsUIPort)
+	case "server":
+		startServer(log, flags, cfg, meta)
+	default:
+		fmt.Printf("unknown mode '%s'", flags.Mode)
+		os.Exit(1)
 	}
 }

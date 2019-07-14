@@ -30,3 +30,11 @@ check-server:
 	@heroku apps:info --app $(HEROKU_APP)
 	@echo '=== server status'
 	@curl https://$(HEROKU_APP).herokuapp.com/status
+
+.PHONY: prod-redis
+prod-redis:
+	heroku config -a $(HEROKU_APP) | grep REDIS_URL
+
+.PHONY: prod-jobs
+prod-jobs:
+	go run . -mode=jobs-ui
