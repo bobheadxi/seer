@@ -16,6 +16,10 @@ lint:
 web:
 	cd web ; npm run serve:prod
 
+.PHONY: docs
+docs:
+	cd web ; npm run build
+
 .PHONY: server
 server:
 	docker-compose up

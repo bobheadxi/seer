@@ -5,8 +5,8 @@ export enum Region {
 }
 
 export interface Team {
-  Region: Region;
-  Members: Member[];
+  region: Region;
+  members: Member[];
 }
 
 export interface Match {

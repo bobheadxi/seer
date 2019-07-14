@@ -4,12 +4,13 @@
     <p>Team {{ teamID }}</p>
 
     <div v-if=team>
-      <div>
-        {{ team.Region }}
-        <br />
-        {{ team.Members }}
-      </div>
+      <Overview v-bind:teamID=teamID />
+
+      <br />
+
       <Matches v-bind:teamID=teamID />
+
+      <br />
 
       <div v-if=updateTriggered>
         Matches sync queued
@@ -35,6 +36,7 @@ import { State, Action, Getter } from 'vuex-class';
 import { AxiosError } from 'axios';
 
 import Matches from '@/components/Matches.vue';
+import Overview from '@/components/Overview.vue';
 
 import { ErrorState } from '../primitives';
 import { Namespace } from '../store';
@@ -49,7 +51,7 @@ const leagueSpace = { namespace: Namespace.LEAGUE };
 
 @Component({
   components: {
-    Matches,
+    Matches, Overview,
   },
 })
 export default class Team extends Vue {
@@ -63,6 +65,9 @@ export default class Team extends Vue {
 
   @Getter(TeamGetters.TEAM, { namespace: Namespace.TEAMS })
   private teamData!: (id: string) => types.Team;
+
+  @Getter(TeamGetters.MATCHES, teamsSpace)
+  matchesData!: (t: string) => [types.Match] | undefined;
 
   error: ErrorState = { occured: false };
   loading: boolean = true;
