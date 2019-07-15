@@ -2,10 +2,13 @@
   <div class="overview">
     <h2>Overview</h2>
     <div>
+      <div>
+        {{ overviews.team }}
+      </div>
       <div v-for="m in team.members" v-bind:key="m.id">
         <h3>
           {{ m.name }}
-          ({{ playerOverviews && playerOverviews[m.name] && playerOverviews[m.name].tier ? playerOverviews[m.name].tier + ', ' : ''}}
+          ({{ overviews.players && overviews.players[m.name] && overviews.players[m.name].tier ? overviews.players[m.name].tier + ', ' : ''}}
           lv{{ m.summonerLevel }})
           <!-- TODO: regions? --->
           <a v-bind:href="'https://na.op.gg/summoner/userName='+m.name" target="_blank">
@@ -13,22 +16,22 @@
               src="https://lh3.googleusercontent.com/UdvXlkugn0bJcwiDkqHKG5IElodmv-oL4kHlNAklSA2sdlVWhojsZKaPE-qFPueiZg" />
           </a>
         </h3>
-        <div v-if="playerOverviews && playerOverviews[m.name] && playerOverviews[m.name].aggs">
+        <div v-if="overviews.players && overviews.players[m.name] && overviews.players[m.name].aggs">
           <div>
             <h5>Most played lane and role</h5>
-            {{ playerOverviews[m.name].aggs.favourite.lane }}
-            ({{ playerOverviews[m.name].aggs.favourite.role }})
+            {{ overviews.players[m.name].aggs.favourite.lane }}
+            ({{ overviews.players[m.name].aggs.favourite.role }})
           </div>
           <div>
             <h5>Most played champions</h5>
             <img
-              v-for="c in playerOverviews[m.name].aggs.favourite.champs"
+              v-for="c in overviews.players[m.name].aggs.favourite.champs"
               v-bind:key="'fav-'+m.name+'-'+c"
               v-bind:src="champIcon(c)" />
           </div>
           <div>
             <h5>Average stats</h5>
-            {{ playerOverviews[m.name].aggs.avg }}
+            {{ overviews.players[m.name].aggs.avg }}
           </div>
         </div>
       </div>
@@ -47,7 +50,9 @@ import { LeagueGetters, IDGetter } from '../store/league';
 import {
   ItemData, ChampData, RunesData, SpellData,
 } from '../store/league/types';
-import { Match, Team, Participant } from '../api/types';
+import {
+  Match, Team, Participant, MatchTeam,
+} from '../api/types';
 
 const leagueSpace = { namespace: Namespace.LEAGUE };
 const teamsSpace = { namespace: Namespace.TEAMS };
@@ -154,6 +159,51 @@ function compilePlayerAggregations(agg: PlayerAggregations): CompiledPlayerAggre
   };
 }
 
+interface TeamOverview {
+  aggs?: CompiledTeamAggregations,
+}
+
+interface TeamAggregations {
+  matchTime: number[],
+  wins: boolean[],
+
+  towers: number[],
+  dragons: number[],
+  barons: number[],
+}
+
+interface CompiledTeamAggregations {
+  games: number,
+  winRate: string,
+  avg: {
+    matchTime: string,
+    towers: string,
+    dragons: string,
+    barons: string,
+  },
+}
+
+function compileTeamAggregations(agg: TeamAggregations): CompiledTeamAggregations {
+  const wins = agg.wins.filter(x => x).length;
+
+  const avgGameTime = parseInt(getAvg(agg.matchTime), 10);
+  return {
+    games: agg.wins.length,
+    winRate: (wins / agg.wins.length).toFixed(2),
+    avg: {
+      matchTime: `${Math.floor(avgGameTime / 60)}:${Math.floor(avgGameTime % 60)}`,
+      towers: getAvg(agg.towers),
+      dragons: getAvg(agg.dragons),
+      barons: getAvg(agg.barons),
+    },
+  };
+}
+
+interface Overviews {
+  team: TeamOverview,
+  players: PlayerOverviews,
+}
+
 @Component
 export default class Overview extends Vue {
   @Prop() teamID!: string;
@@ -183,18 +233,27 @@ export default class Overview extends Vue {
     return mapping;
   }
 
-  get playerOverviews(): PlayerOverviews {
+  get overviews(): Overviews {
     const matches = this.matchesData(this.teamID);
-    if (!matches) return {};
+    if (!matches) return { team: {}, players: {} };
     const mapping = this.idToName();
     console.debug('generating overviews', {
       matches: matches.length,
     });
 
     const aggs: { [name: string]: PlayerAggregations } = {};
-    const data: PlayerOverviews = {}; // finalized data
+    const teamAggs: TeamAggregations = {
+      matchTime: [],
+      wins: [],
+      towers: [],
+      dragons: [],
+      barons: [],
+    };
+    const data: Overviews = { team: {}, players: {} }; // finalized data
 
     matches.forEach((m) => {
+      // collect participant data
+      let team: MatchTeam | undefined;
       m.details.participantIdentities.forEach((p) => {
         let id = p.player.accountId;
         if (p.player.currentAccountId && p.player.currentAccountId !== id) id = p.player.currentAccountId;
@@ -206,20 +265,35 @@ export default class Overview extends Vue {
           console.debug(`could not find participant ${p.participantId}`);
           return;
         };
+        const partTeam = m.details.teams.find(v => v.teamId === part.teamId);
+        if (partTeam) team = partTeam;
 
         // collect straight data
-        if (!data[name]) data[name] = {};
-        data[name].tier = part.highestAchievedSeasonTier; // TODO: compare to get highest tier
+        if (!data.players[name]) data.players[name] = {};
+        data.players[name].tier = part.highestAchievedSeasonTier; // TODO: compare to get highest tier
 
         // collect data for aggregation
         if (!aggs[name]) aggs[name] = newPlayerAggregation();
         updatePlayerAggregation(aggs[name], part);
       });
+
+      // collect team data
+      teamAggs.matchTime.push(m.details.gameDuration);
+      if (team) {
+        teamAggs.wins.push(team.win === 'Win'); // rito why is this variable a string?
+        teamAggs.towers.push(team.towerKills);
+        teamAggs.dragons.push(team.dragonKills);
+        teamAggs.barons.push(team.baronKills);
+      }
     });
 
+    // compile player aggs
     Object.keys(aggs).forEach((k) => {
-      data[k].aggs = compilePlayerAggregations(aggs[k]);
+      data.players[k].aggs = compilePlayerAggregations(aggs[k]);
     });
+    // compile team aggs
+    data.team.aggs = compileTeamAggregations(teamAggs);
+
     console.log('generated overviews', data);
     return data;
   }
