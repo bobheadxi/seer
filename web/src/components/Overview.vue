@@ -197,7 +197,7 @@ export default class Overview extends Vue {
     matches.forEach((m) => {
       m.details.participantIdentities.forEach((p) => {
         let id = p.player.accountId;
-        if (p.player.currentAccountId) id = p.player.currentAccountId;
+        if (p.player.currentAccountId && p.player.currentAccountId !== id) id = p.player.currentAccountId;
         const name = mapping[id];
         if (!name) return; // untracked player
 
