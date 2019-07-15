@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -129,7 +130,7 @@ func (g *gitHubStore) Create(ctx context.Context, teamID string, team *Team) err
 	return nil
 }
 
-func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, []MatchData, error) {
+func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, Matches, error) {
 	log := g.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
 
 	teamIssue, err := g.teams.getID(ctx, teamID)
@@ -160,7 +161,7 @@ func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, []MatchDat
 		return nil, nil, err
 	}
 	log.Info("found comments", zap.Int("comments", len(comments)))
-	matches := make([]MatchData, 0)
+	matches := make(Matches, 0)
 	for _, c := range comments {
 		if c.GetUser().GetLogin() != g.repo.Owner {
 			log.Debug("skipping comment from unknown user", zap.String("unknown_user", c.GetUser().GetLogin()))
@@ -178,12 +179,13 @@ func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, []MatchDat
 			Details: &details,
 		})
 	}
+	sort.Sort(matches)
 
 	log.Info("team retrieved", zap.Int("matches", len(matches)))
 	return &team, matches, nil
 }
 
-func (g *gitHubStore) Add(ctx context.Context, teamID string, matches []MatchData) error {
+func (g *gitHubStore) Add(ctx context.Context, teamID string, matches Matches) error {
 	log := g.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
 
 	teamIssue, err := g.teams.getID(ctx, teamID)
@@ -192,6 +194,7 @@ func (g *gitHubStore) Add(ctx context.Context, teamID string, matches []MatchDat
 	}
 
 	var added int
+	sort.Sort(matches)
 	for _, m := range matches {
 		log.Debug("storing match", zap.Int64("game_id", m.Details.GameID))
 		b, err := json.Marshal(m.Details)

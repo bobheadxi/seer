@@ -10,6 +10,16 @@ import (
 	"go.bobheadxi.dev/seer/riot"
 )
 
+// Store defines the contract different storage backends for Seer should have
+type Store interface {
+	Create(ctx context.Context, teamID string, team *Team) error
+
+	Get(ctx context.Context, teamID string) (*Team, Matches, error)
+	Add(ctx context.Context, teamID string, matches Matches) error
+
+	// LastUpdated(ctx context.Context, teamID string) (*time.Time, error)
+}
+
 // Team represents a team
 type Team struct {
 	Region  riot.Region      `json:"region"`
@@ -33,12 +43,23 @@ type MatchData struct {
 	Details *riot.MatchDetails `json:"details"`
 }
 
-// Store defines the contract different storage backends for Seer should have
-type Store interface {
-	Create(ctx context.Context, teamID string, team *Team) error
+// Matches is a collection of MatchData. It can be sorted so that the most recent
+// games come first.
+type Matches []MatchData
 
-	Get(ctx context.Context, teamID string) (*Team, []MatchData, error)
-	Add(ctx context.Context, teamID string, matches []MatchData) error
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (m Matches) Len() int { return len(m) }
 
-	// LastUpdated(ctx context.Context, teamID string) (*time.Time, error)
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (m Matches) Less(i, j int) bool {
+	return m[i].Details.GameCreation > m[i].Details.GameCreation
+}
+
+// Swap swaps the elements with indexes i and j.
+func (m Matches) Swap(i, j int) {
+	tmp := m[i]
+	m[i] = m[j]
+	m[j] = tmp
 }
