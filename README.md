@@ -15,7 +15,7 @@
   </a>
 
   <a href="https://seer-engine.herokuapp.com/status">
-    <img src="https://img.shields.io/website/https/seer-engine.herokuapp.com.svg?down_color=lightgrey&down_message=offline&label=api&up_message=online"
+    <img src="https://img.shields.io/website/https/seer-engine.herokuapp.com/status.svg?down_color=lightgrey&down_message=offline&label=api&up_message=online"
       alt="API Status" >
   </a>
 </p>
