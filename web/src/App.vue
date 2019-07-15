@@ -4,7 +4,14 @@
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link>
     </div>
+
     <router-view/>
+
+    <div id="footer">
+      <a href="https://github.com/bobheadxi/seer" target="_blank">
+        <img src="https://image.flaticon.com/icons/svg/25/25231.svg" width="32px" height="32px" />
+      </a>
+    </div>
   </div>
 </template>
 
