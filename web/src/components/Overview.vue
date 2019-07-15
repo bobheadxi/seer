@@ -4,7 +4,9 @@
     <div>
       <div v-for="m in team.members" v-bind:key="m.id">
         <h3>
-          {{ m.name }} ({{ playerOverviews && playerOverviews[m.name] ? playerOverviews[m.name].tier + ', ' : ''}}lv{{ m.summonerLevel }})
+          {{ m.name }}
+          ({{ playerOverviews && playerOverviews[m.name] && playerOverviews[m.name].tier ? playerOverviews[m.name].tier + ', ' : ''}}
+          lv{{ m.summonerLevel }})
           <!-- TODO: regions? --->
           <a v-bind:href="'https://na.op.gg/summoner/userName='+m.name" target="_blank">
             <img width="16" height="16"
@@ -185,6 +187,10 @@ export default class Overview extends Vue {
     const matches = this.matchesData(this.teamID);
     if (!matches) return {};
     const mapping = this.idToName();
+    console.debug('generating overviews', {
+      matches: matches.length,
+    });
+
     const aggs: { [name: string]: PlayerAggregations } = {};
     const data: PlayerOverviews = {}; // finalized data
 
@@ -214,7 +220,7 @@ export default class Overview extends Vue {
     Object.keys(aggs).forEach((k) => {
       data[k].aggs = compilePlayerAggregations(aggs[k]);
     });
-
+    console.log('generated overviews', data);
     return data;
   }
 }

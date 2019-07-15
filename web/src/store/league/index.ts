@@ -9,6 +9,8 @@ import {
 } from './types';
 import { findByKey } from './query';
 
+const ddragonURL = 'https://ddragon.leagueoflegends.com';
+
 export interface LeagueMetadataState {
   version: string;
   downloaded: string;
@@ -43,12 +45,12 @@ const getterTree: GetterTree<LeagueMetadataState, RootState> = {
   [LeagueGetters.ITEM]: (state): IDGetter<ItemData> => item => state.items[item],
   [LeagueGetters.ITEM_ICON]: (state): IDGetter<string> => (item) => {
     const { version } = state;
-    return `http://ddragon.leagueoflegends.com/cdn/${version}/img/item/${item}.png`;
+    return `${ddragonURL}/cdn/${version}/img/item/${item}.png`;
   },
   [LeagueGetters.ITEM_SPRITE]: (state): IDGetter<string> => (item) => {
     const { version } = state;
     const i = state.items[item];
-    return `http://ddragon.leagueoflegends.com/cdn/${version}/img/sprite/${i.image.sprite}`;
+    return `${ddragonURL}/cdn/${version}/img/sprite/${i.image.sprite}`;
   },
 
   [LeagueGetters.CHAMP]: (state): IDGetter<ChampData> => id => findByKey<ChampData>(state.champs, id.toString()),
@@ -56,7 +58,7 @@ const getterTree: GetterTree<LeagueMetadataState, RootState> = {
     const { version } = state;
     const champ = findByKey<ChampData>(state.champs, id.toString());
     if (!champ) return '';
-    return `http://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.image.full}`;
+    return `${ddragonURL}/cdn/${version}/img/champion/${champ.image.full}`;
   },
   // TODO: sprites
 
@@ -87,7 +89,7 @@ export enum LeagueActions {
 
 const actionTree: ActionTree<LeagueMetadataState, RootState> = {
   [LeagueActions.DOWNLOAD_METADATA]: async (context, { force = false }) => {
-    const version = await getAndCommit(context, 'SET_VERSION', 'https://ddragon.leagueoflegends.com/realms/na.json', 'dd');
+    const version = await getAndCommit(context, 'SET_VERSION', `${ddragonURL}/realms/na.json`, 'dd');
     console.debug('checking league metadata', {
       requiredVersion: version,
       downloadedVersion: context.state.downloaded,
@@ -101,10 +103,10 @@ const actionTree: ActionTree<LeagueMetadataState, RootState> = {
 
   DOWNLOAD_DATA_FOR_VERSION: async (context, version) => {
     console.debug(`fetching v${version} data`);
-    await getAndCommit(context, 'STORE_ITEMS', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_GB/item.json`, 'data');
-    await getAndCommit(context, 'STORE_CHAMPS', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_GB/champion.json`, 'data');
-    await getAndCommit(context, 'STORE_RUNES', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/runesReforged.json`);
-    await getAndCommit(context, 'STORE_SUMMONERS', `http://ddragon.leagueoflegends.com/cdn/${version}/data/en_GB/summoner.json`, 'data');
+    await getAndCommit(context, 'STORE_ITEMS', `${ddragonURL}/cdn/${version}/data/en_GB/item.json`, 'data');
+    await getAndCommit(context, 'STORE_CHAMPS', `${ddragonURL}/cdn/${version}/data/en_GB/champion.json`, 'data');
+    await getAndCommit(context, 'STORE_RUNES', `${ddragonURL}/cdn/${version}/data/en_US/runesReforged.json`);
+    await getAndCommit(context, 'STORE_SUMMONERS', `${ddragonURL}/cdn/${version}/data/en_GB/summoner.json`, 'data');
     context.commit('SET_DOWNLOADED', { version });
   },
 };

@@ -65,6 +65,7 @@ const actionTree: ActionTree<TeamsState, RootState> = {
   [TeamActions.FETCH_TEAM]: async (context, payload: FetchTeamPayload) => {
     const { teamID, force } = payload;
     if (context.state.teams.find(v => v.id === teamID) && !force) return;
+    if (force) context.commit('REMOVE_TEAM_DATA', { teamID });
 
     const { client } = context.rootState;
     const { team, matches } = await client.getTeam(teamID);
@@ -91,7 +92,13 @@ const mutationTree: MutationTree<TeamsState> = {
   },
 
   SET_TEAM_UPDATE_STATUS: (state, payload: { teamID: string, status: any }) => {
+    state.updateStatus = state.updateStatus.filter(v => v.id !== payload.teamID);
     state.updateStatus.push({ id: payload.teamID, data: payload.status });
+  },
+
+  REMOVE_TEAM_DATA: (state, payload: { teamID: string }) => {
+    state.teams = state.teams.filter(v => v.id !== payload.teamID);
+    state.matches = state.matches.filter(v => v.id !== payload.teamID);
   },
 };
 

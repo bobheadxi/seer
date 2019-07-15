@@ -6,8 +6,10 @@
       No matches found for this team.
     </div>
     <div v-if=matches>
+      <p>{{ matches.length }} matches retrieved.</p>
       <div v-for="m in matches" :key="m.gameId">
         <h3>Game {{ m.details.gameId }}</h3>
+        <p> </p>
         <div v-for="p in m.details.participants" :key="p.participantId">
           Participant: {{ p.participantId }}
           <br />
