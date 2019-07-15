@@ -19,7 +19,7 @@ export class SeerAPI {
   constructor(addr: string) {
     this.net = axios.create({
       baseURL: addr,
-      timeout: 5000,
+      timeout: 10000,
       responseType: 'json',
     });
   }
