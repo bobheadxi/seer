@@ -63,7 +63,7 @@ func New(
 			"build.commit", meta.Commit))
 	})
 
-	// TODO: hash of names instead of shortid?
+	// register api endpoints
 	teams := &teamAPI{l.Named("teams"), riotAPI, backend, jobsEngine}
 	mux.Route("/team", teams.Group)
 
