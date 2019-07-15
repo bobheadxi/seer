@@ -16,7 +16,7 @@ export enum Namespace {
 
 const store: StoreOptions<RootState> = {
   state: {
-    client: new SeerAPI(process.env.VUE_APP_API_ADDR || 'localhost:8080'),
+    client: new SeerAPI(process.env.VUE_APP_API_ADDR || 'http://localhost:8080'),
     version: '1.0.0',
   },
   modules: {
