@@ -56,6 +56,8 @@ func New(
 		zhttp.NewMiddleware(l.Named("requests"), nil).Logger,
 	)
 
+	// status check endpoints
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		res.R(w, r, res.MsgOK("server online",
 			"build.commit", meta.Commit))
