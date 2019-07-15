@@ -155,29 +155,42 @@ func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, Matches, e
 	}
 
 	// get matches from comments
-	// TODO: might need to page eventually
-	comments, _, err := g.c.Issues.ListComments(ctx, g.repo.Owner, g.repo.Repo, teamIssue, &github.IssueListCommentsOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-	log.Info("found comments", zap.Int("comments", len(comments)))
 	matches := make(Matches, 0)
-	for _, c := range comments {
-		if c.GetUser().GetLogin() != g.repo.Owner {
-			log.Debug("skipping comment from unknown user", zap.String("unknown_user", c.GetUser().GetLogin()))
-			continue
-		}
-		var details riot.MatchDetails
-		if err := json.Unmarshal([]byte(c.GetBody()), &details); err != nil {
-			log.Error("failed to unmarshal comment",
-				zap.Error(err),
-				zap.Int64("comment.id", c.GetID()),
-				zap.String("comment.url", c.GetURL()))
-			continue
-		}
-		matches = append(matches, MatchData{
-			Details: &details,
+	for page := 1; page != 0; {
+		comments, resp, err := g.c.Issues.ListComments(ctx, g.repo.Owner, g.repo.Repo, teamIssue, &github.IssueListCommentsOptions{
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: 100,
+			},
 		})
+		if err != nil {
+			return nil, nil, err
+		}
+		log.Info("found comments",
+			zap.Int("comments", len(comments)),
+			zap.Int("page", page))
+
+		// set next page
+		page = resp.NextPage
+
+		// parse comments for matches
+		for _, c := range comments {
+			if c.GetUser().GetLogin() != g.repo.Owner {
+				log.Debug("skipping comment from unknown user", zap.String("unknown_user", c.GetUser().GetLogin()))
+				continue
+			}
+			var details riot.MatchDetails
+			if err := json.Unmarshal([]byte(c.GetBody()), &details); err != nil {
+				log.Error("failed to unmarshal comment",
+					zap.Error(err),
+					zap.Int64("comment.id", c.GetID()),
+					zap.String("comment.url", c.GetURL()))
+				continue
+			}
+			matches = append(matches, MatchData{
+				Details: &details,
+			})
+		}
 	}
 	sort.Sort(matches)
 
