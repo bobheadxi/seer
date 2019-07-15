@@ -1,17 +1,17 @@
 <template>
   <div class="matches">
+    <h2>Matches</h2>
+    <p>This section is busted right now, don't bother looking.</p>
     <div v-if=!matches>
       No matches found for this team.
     </div>
     <div v-if=matches>
       <div v-for="m in matches" :key="m.gameId">
-        Game ID: {{ m.details.gameId }}
+        <h3>Game {{ m.details.gameId }}</h3>
         <div v-for="p in m.details.participants" :key="p.participantId">
           Participant: {{ p.participantId }}
           <br />
           <div>
-            ChampionID: {{ p.championId }}
-            {{ champIcon(p.championId) }}
             <img :src="champIcon(p.championId)" />
           </div>
           <br />

@@ -41,6 +41,7 @@ export interface Member {
 
 export interface Player {
   accountId: string;
+  currentAccountId?: string;
 }
 
 export interface ParticipantIdentity {

@@ -1,7 +1,8 @@
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
-    <p>Team {{ teamID }}</p>
+    <h1>Team {{ teamID }}</h1>
+    <p>These stats are collected only from games where at least 4 members from this team played together.</p>
 
     <div v-if=team>
       <Overview v-bind:teamID=teamID />
