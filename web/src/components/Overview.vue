@@ -2,36 +2,32 @@
   <div class="overview">
     <h2>Overview</h2>
     <div>
-      <button v-on:click="copyMembersToClipboard()">copy to clipboard</button>
-      <a v-bind:href="'http://na.op.gg/multi/query='+memberNames()" target="_blank">
-        <button>open in na.op.gg</button>
-      </a>
-    </div>
-    <div>
       <div v-for="m in team.members" v-bind:key="m.id">
         <h3>
-          {{ m.name }} ({{ playerOverviews[m.name].tier }}, lv{{ m.summonerLevel }})
+          {{ m.name }} ({{ playerOverviews && playerOverviews[m.name] ? playerOverviews[m.name].tier + ', ' : ''}}lv{{ m.summonerLevel }})
           <!-- TODO: regions? --->
           <a v-bind:href="'https://na.op.gg/summoner/userName='+m.name" target="_blank">
             <img width="16" height="16"
               src="https://lh3.googleusercontent.com/UdvXlkugn0bJcwiDkqHKG5IElodmv-oL4kHlNAklSA2sdlVWhojsZKaPE-qFPueiZg" />
           </a>
         </h3>
-        <div>
-          <h5>Most played lane and role</h5>
-          {{ playerOverviews[m.name].aggs.favourite.lane }}
-          ({{ playerOverviews[m.name].aggs.favourite.role }})
-        </div>
-        <div>
-          <h5>Most played champions</h5>
-          <img
-            v-for="c in playerOverviews[m.name].aggs.favourite.champs"
-            v-bind:key="'fav-'+m.name+'-'+c"
-            v-bind:src="champIcon(c)" />
-        </div>
-        <div>
-          <h5>Average stats</h5>
-          {{ playerOverviews[m.name].aggs.avg }}
+        <div v-if="playerOverviews && playerOverviews[m.name] && playerOverviews[m.name].aggs">
+          <div>
+            <h5>Most played lane and role</h5>
+            {{ playerOverviews[m.name].aggs.favourite.lane }}
+            ({{ playerOverviews[m.name].aggs.favourite.role }})
+          </div>
+          <div>
+            <h5>Most played champions</h5>
+            <img
+              v-for="c in playerOverviews[m.name].aggs.favourite.champs"
+              v-bind:key="'fav-'+m.name+'-'+c"
+              v-bind:src="champIcon(c)" />
+          </div>
+          <div>
+            <h5>Average stats</h5>
+            {{ playerOverviews[m.name].aggs.avg }}
+          </div>
         </div>
       </div>
     </div>
@@ -53,17 +49,6 @@ import { Match, Team, Participant } from '../api/types';
 
 const leagueSpace = { namespace: Namespace.LEAGUE };
 const teamsSpace = { namespace: Namespace.TEAMS };
-
-function copyStringToClipboard(str: string) {
-  const el = document.createElement('textarea');
-  el.value = str;
-  el.setAttribute('readonly', '');
-  document.body.appendChild(el);
-  el.select();
-  // Copy text to clipboard
-  document.execCommand('copy');
-  document.body.removeChild(el);
-}
 
 // TODO: move math stuff into a module
 
@@ -231,16 +216,6 @@ export default class Overview extends Vue {
     });
 
     return data;
-  }
-
-  memberNames(): string {
-    if (!this.team) return '';
-    return this.team.members.map(m => m.name).join(',');
-  }
-
-  copyMembersToClipboard() {
-    const teamStr = this.memberNames();
-    copyStringToClipboard(teamStr);
   }
 }
 

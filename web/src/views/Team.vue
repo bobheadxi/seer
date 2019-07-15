@@ -4,7 +4,15 @@
     <h1>Team {{ teamID }}</h1>
     <p>These stats are collected only from games where at least 4 members from this team played together.</p>
 
-    <div v-if=team>
+    <div v-if="team && !loading">
+      <div>
+        <button v-on:click="copyMembersToClipboard()">copy to clipboard</button>
+        <a v-bind:href="'http://na.op.gg/multi/query='+memberNames()" target="_blank">
+          <button>open in na.op.gg</button>
+        </a>
+        <button v-on:click="forceFetchTeam()">refresh</button>
+      </div>
+
       <Overview v-bind:teamID=teamID />
 
       <br />
@@ -46,6 +54,17 @@ import {
 } from '../store/teams';
 import { LeagueActions } from '../store/league';
 import * as types from '../api/types';
+
+function copyStringToClipboard(str: string) {
+  const el = document.createElement('textarea');
+  el.value = str;
+  el.setAttribute('readonly', '');
+  document.body.appendChild(el);
+  el.select();
+  // Copy text to clipboard
+  document.execCommand('copy');
+  document.body.removeChild(el);
+}
 
 const teamsSpace = { namespace: Namespace.TEAMS };
 const leagueSpace = { namespace: Namespace.LEAGUE };
@@ -102,6 +121,26 @@ export default class Team extends Vue {
       this.error = { occured: true, details: e };
       this.updateTriggered = false;
     }
+  }
+
+  memberNames(): string {
+    if (!this.team) return '';
+    return this.team.members.map(m => m.name).join(',');
+  }
+
+  copyMembersToClipboard() {
+    const teamStr = this.memberNames();
+    copyStringToClipboard(teamStr);
+  }
+
+  async forceFetchTeam() {
+    this.loading = true;
+    try {
+      await this.fetchTeam({ teamID: this.teamID, force: true });
+    } catch (e) {
+      this.error = { occured: true, details: e };
+    }
+    this.loading = false;
   }
 }
 
