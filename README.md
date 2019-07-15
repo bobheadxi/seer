@@ -18,4 +18,9 @@
     <img src="https://img.shields.io/website/https/seer-engine.herokuapp.com/status.svg?down_color=lightgrey&down_message=offline&label=api&up_message=online"
       alt="API Status" >
   </a>
+
+  <a href="https://seer.bobheadxi.dev">
+    <img src="https://img.shields.io/website/https/seer.bobheadxi.dev.svg?down_color=lightgrey&down_message=offline&up_message=online"
+      alt="Website Status">
+  </a>
 </p>
