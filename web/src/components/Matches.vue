@@ -9,7 +9,7 @@
       <p>{{ matches.length }} matches retrieved.</p>
       <div v-for="m in matches" :key="m.gameId">
         <h3>Game {{ m.details.gameId }}</h3>
-        <p> </p>
+        <p>{{ dateString(m.details.gameCreation) }}</p>
         <div v-for="p in m.details.participants" :key="p.participantId">
           Participant: {{ p.participantId }}
           <br />
@@ -85,6 +85,10 @@ export default class Matches extends Vue {
 
   get matches(): [Match] | undefined {
     return this.matchesData(this.teamID);
+  }
+
+  dateString(v: number): string {
+    return new Date(v).toLocaleString('en-US');
   }
 }
 

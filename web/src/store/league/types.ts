@@ -1,7 +1,7 @@
 
 
 // Champions
-// http://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/champion.json
+// https://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/champion.json
 
 export interface ChampData {
   key: string;
@@ -12,7 +12,7 @@ export interface ChampData {
 }
 
 // Items
-// http://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/item.json
+// https://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/item.json
 
 export interface ItemData {
   name: string;
@@ -22,7 +22,7 @@ export interface ItemData {
 }
 
 // Runes reforged
-// http://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/runesReforged.json
+// https://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/runesReforged.json
 
 export interface RunesData {
   id: number;
@@ -46,7 +46,7 @@ export interface Rune {
 }
 
 // Summoner spells data
-// http://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/summoner.json
+// https://ddragon.leagueoflegends.com/cdn/9.13.1/data/en_US/summoner.json
 
 export interface SpellData {
   id: string;
