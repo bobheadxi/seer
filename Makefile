@@ -1,6 +1,6 @@
 HEROKU_APP=seer-engine
 
-all:
+all: docs
 	rm -rf seer
 	go build
 
