@@ -22,7 +22,7 @@ docs:
 
 .PHONY: server
 server:
-	docker-compose up
+	docker-compose up --build
 
 # https://developer.riotgames.com/
 .PHONY: riot-token
@@ -41,4 +41,4 @@ prod-redis:
 
 .PHONY: prod-jobs
 prod-jobs:
-	go run . -mode=jobs-ui
+	go run . -mode=jobs-ui-only

@@ -23,7 +23,7 @@ type Server struct {
 	mux *chi.Mux
 	srv *http.Server
 
-	jobsEngine jobs.Engine
+	jobsQueue jobs.Queue
 }
 
 // New instantiates a new server
@@ -31,13 +31,13 @@ func New(
 	l *zap.Logger,
 	riotAPI riot.API,
 	backend store.Store,
-	jobsEngine jobs.Engine,
+	jobsQueue jobs.Queue,
 	meta config.BuildMeta,
 ) (*Server, error) {
 	srv := &Server{
-		l:          l,
-		srv:        &http.Server{},
-		jobsEngine: jobsEngine,
+		l:         l,
+		srv:       &http.Server{},
+		jobsQueue: jobsQueue,
 	}
 
 	mux := chi.NewMux()
@@ -64,7 +64,7 @@ func New(
 	})
 
 	// register api endpoints
-	teams := &teamAPI{l.Named("teams"), riotAPI, backend, jobsEngine}
+	teams := &teamAPI{l.Named("teams"), riotAPI, backend, jobsQueue}
 	mux.Route("/team", teams.Group)
 
 	srv.srv.Handler = mux
@@ -76,8 +76,6 @@ func (s *Server) Start(addr string, stop chan bool) error {
 	if addr == "" {
 		addr = ":8080"
 	}
-
-	s.jobsEngine.Start()
 
 	s.srv.Addr = addr
 	go func() {
@@ -92,5 +90,4 @@ func (s *Server) Stop(ctx context.Context) {
 	if err := s.srv.Shutdown(ctx); err != nil {
 		s.l.Error(err.Error())
 	}
-	s.jobsEngine.Close()
 }

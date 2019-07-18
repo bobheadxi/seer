@@ -17,9 +17,9 @@ import (
 type teamAPI struct {
 	l *zap.Logger
 
-	riotAPI   riot.API
-	backend   store.Store
-	jobEngine jobs.Engine
+	riotAPI  riot.API
+	backend  store.Store
+	jobQueue jobs.Queue
 }
 
 func (t *teamAPI) Group(r chi.Router) {
@@ -112,7 +112,7 @@ func (t *teamAPI) postUpdateTeam(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: check for last updated?
 
-	jobID, err := t.jobEngine.Queue(jobs.NewMatchesSyncJob(teamID, requestID))
+	jobID, err := t.jobQueue.Queue(jobs.NewMatchesSyncJob(teamID, requestID))
 	if err != nil {
 		log.Error("failed to queue team update", zap.Error(err))
 		res.R(w, r, res.ErrInternalServer("failed to queue team update", err))

@@ -36,21 +36,39 @@ func main() {
 		zap.Any("meta", meta),
 		zap.Any("flags", flags))
 
-	// handle any special operational mode
-	switch flags.Mode {
-	case "jobs-ui":
+	// handle jobs-ui-only mode first
+	if flags.Mode() == config.ModeJobsUIOnly {
 		if flags.JobsUIPort == "" {
 			flags.JobsUIPort = "8081"
 		}
-		startJobsUI(
+		startJobsUI(log.Named("jobs_ui"), cfg.RedisNamespace, cfg.DefaultRedisPool(), ":"+flags.JobsUIPort)
+		return
+	}
+
+	// spin up jobs manager UI as well if configured to do so for all other modes
+	if flags.JobsUIPort != "" {
+		go startJobsUI(
 			log.Named("jobs_ui"),
 			cfg.RedisNamespace,
 			cfg.DefaultRedisPool(),
 			":"+flags.JobsUIPort)
-	case "server":
-		startServer(log, flags, cfg, meta)
+	}
+	<-newStopper()
+
+	// handle other operation modes
+	switch flags.Mode() {
+	case config.ModeServer:
+		startServer(log.Named("server"), flags, cfg, meta)
+
+	case config.ModeWorker:
+		startWorker(log.Named("worker"), flags, cfg, meta)
+
+	case config.ModeAll:
+		go startServer(log.Named("server"), flags, cfg, meta)
+		startWorker(log.Named("worker"), flags, cfg, meta)
+
 	default:
-		fmt.Printf("unknown mode '%s'", flags.Mode)
+		fmt.Printf("unknown mode '%s'", flags.Mode())
 		os.Exit(1)
 	}
 }
