@@ -53,7 +53,6 @@ func main() {
 			cfg.DefaultRedisPool(),
 			":"+flags.JobsUIPort)
 	}
-	<-newStopper()
 
 	// handle other operation modes
 	switch flags.Mode() {
