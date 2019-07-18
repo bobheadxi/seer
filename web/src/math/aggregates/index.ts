@@ -1,5 +1,25 @@
 import { Participant } from '@/api/types';
 
+// overviews
+
+export interface TeamOverview {
+  aggs?: CompiledTeamAggregations,
+}
+
+export interface PlayerOverview {
+  tier?: string;
+  aggs?: CompiledPlayerAggregations;
+}
+
+export interface PlayerOverviews { [name: string]: PlayerOverview }
+
+export interface Overviews {
+  team: TeamOverview,
+  players: PlayerOverviews,
+}
+
+// aggregations
+
 export interface PlayerAggregations {
   // average, etc
   vision: number[],
@@ -72,7 +92,7 @@ export interface CompiledPlayerAggregations {
     champs: number[],
     lane: string,
     role: string,
-  }
+  },
 }
 
 export function getAvg(arr: number[]): string {

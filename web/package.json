@@ -10,10 +10,13 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "@types/chart.js": "^2.7.55",
     "axios": "^0.19.0",
+    "chart.js": "^2.8.0",
     "core-js": "^2.6.5",
     "tslib": "^1.10.0",
     "vue": "^2.6.10",
+    "vue-chartjs": "github:bobheadxi/vue-chartjs",
     "vue-class-component": "^7.1.0",
     "vue-property-decorator": "^8.2.1",
     "vue-router": "^3.0.7",

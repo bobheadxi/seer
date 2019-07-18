@@ -4,6 +4,7 @@
     <div>
       <div>
         {{ overviews.team }}
+        <SimpleAggregatePie :aggKeys="['avg', 'dealt']" :aggs=overviews.players />
       </div>
       <div v-for="m in team.members" v-bind:key="m.id">
         <h3>
@@ -44,6 +45,8 @@
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { State, Action, Getter } from 'vuex-class';
 
+import SimpleAggregatePie from './vis/SimpleAggregatePie';
+
 import { Namespace } from '../store';
 import teams, { TeamGetters } from '../store/teams';
 import { LeagueGetters, IDGetter } from '../store/league';
@@ -54,6 +57,7 @@ import {
   Match, Team, Participant, MatchTeam,
 } from '../api/types';
 import {
+  Overviews,
   PlayerAggregations, TeamAggregations,
   CompiledPlayerAggregations, CompiledTeamAggregations,
   newPlayerAggregation, updatePlayerAggregation,
@@ -63,23 +67,11 @@ import {
 const leagueSpace = { namespace: Namespace.LEAGUE };
 const teamsSpace = { namespace: Namespace.TEAMS };
 
-interface TeamOverview {
-  aggs?: CompiledTeamAggregations,
-}
-
-interface PlayerOverview {
-  tier?: string;
-  aggs?: CompiledPlayerAggregations;
-}
-
-interface PlayerOverviews { [name: string]: PlayerOverview }
-
-interface Overviews {
-  team: TeamOverview,
-  players: PlayerOverviews,
-}
-
-@Component
+@Component({
+  components: {
+    SimpleAggregatePie,
+  },
+})
 export default class Overview extends Vue {
   @Prop() teamID!: string;
 
