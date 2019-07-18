@@ -17,10 +17,6 @@
 
       <br />
 
-      <Matches v-bind:teamID=teamID />
-
-      <br />
-
       <div v-if=updateTriggered>
         Matches sync queued
       </div>
@@ -44,7 +40,6 @@ import { Vue, Component, Watch } from 'vue-property-decorator';
 import { State, Action, Getter } from 'vuex-class';
 import { AxiosError } from 'axios';
 
-import Matches from '@/components/Matches.vue';
 import Overview from '@/components/Overview.vue';
 
 import { ErrorState } from '../primitives';
@@ -71,7 +66,7 @@ const leagueSpace = { namespace: Namespace.LEAGUE };
 
 @Component({
   components: {
-    Matches, Overview,
+    Overview,
   },
 })
 export default class Team extends Vue {
