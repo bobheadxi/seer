@@ -9,9 +9,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-
-	"go.bobheadxi.dev/seer/riot"
-	"go.bobheadxi.dev/seer/store"
 )
 
 // Engine is the contract for managing job execution
@@ -26,17 +23,12 @@ type engine struct {
 	jobs *work.Client
 }
 
-// BaseJobContext denotes dependencies common to most jobs
-type BaseJobContext struct {
-	RiotAPI riot.API
-	Store   store.Store
-}
-
 // NewJobsEngine instantiates a new job runn
 func NewJobsEngine(l *zap.Logger, app string, redisPool *redis.Pool, b *BaseJobContext) Engine {
 	pool := work.NewWorkerPool(BaseJobContext{}, uint(runtime.NumCPU()), app, redisPool)
+	queue := NewJobQueue(l.Named("queue"), app, redisPool)
 
-	matchesSync := &matchesSyncContext{l.Named("matches_sync"), b}
+	matchesSync := &matchesSyncContext{l.Named("matches_sync"), queue, b}
 	pool.JobWithOptions(jobMatchesSync, work.JobOptions{
 		Priority: 10,
 		MaxFails: 3,

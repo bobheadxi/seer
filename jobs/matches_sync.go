@@ -38,6 +38,7 @@ func (m *matchesSyncJob) Params() map[string]interface{} {
 
 type matchesSyncContext struct {
 	l *zap.Logger
+	q Queue
 	*BaseJobContext
 }
 
@@ -122,6 +123,14 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 		log.Error("failed to store matches", zap.Error(err))
 		return fmt.Errorf("error saving results to store: %v", err)
 	}
+
+	// queue analaytics
+	analytics, err := NewTeamAnalyticsJob(teamID, requestID, job.ID, team, matchesToStore)
+	if err != nil {
+		log.Error("failed to queue analytics job", zap.Error(err))
+		return fmt.Errorf("error queueing follow-up analytics job: %v", err)
+	}
+	m.q.Queue(analytics)
 
 	return nil
 }

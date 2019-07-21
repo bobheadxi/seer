@@ -1,5 +1,10 @@
 package jobs
 
+import (
+	"go.bobheadxi.dev/seer/riot"
+	"go.bobheadxi.dev/seer/store"
+)
+
 // Job is the interface jobs should fulfill
 type Job interface {
 	Name() string
@@ -24,3 +29,9 @@ const (
 	// StatusDone means the job was able to run to completion
 	StatusDone Status = "done"
 )
+
+// BaseJobContext denotes dependencies common to most jobs
+type BaseJobContext struct {
+	RiotAPI riot.API
+	Store   store.Store
+}
