@@ -21,7 +21,9 @@ func startWorker(
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	bs, err := store.NewGitHubStore(context.Background(), log, cfg.GitHubAPITokenSource(), cfg.GitHubStoreRepo)
+	bs, err := store.NewGitHubStore(context.Background(), log, store.GitHubStoreOpts{
+		Auth: cfg.GitHubAPITokenSource(), Repo: cfg.GitHubStoreRepo,
+	})
 	if err != nil {
 		log.Fatal(err.Error())
 	}

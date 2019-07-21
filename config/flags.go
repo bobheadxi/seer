@@ -25,7 +25,8 @@ type Flags struct {
 	LogPath    string
 	JobsUIPort string
 	APIPort    string
-	mode       string
+
+	mode string
 }
 
 // Mode returns the configured operational mode
@@ -39,6 +40,7 @@ func LoadFlags(args []string) (Flags, error) {
 	flags.StringVar(&v.LogPath, "logpath", "", "path for log storage")
 	flags.StringVar(&v.JobsUIPort, "jobs-ui", "", "enable jobs UI on given port")
 	flags.StringVar(&v.APIPort, "port", "8080", "port to serve Seer API on")
+
 	flags.StringVar(&v.mode, "mode", string(ModeAll), "operation mode to run in")
 	return v, flags.Parse(args)
 }

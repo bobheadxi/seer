@@ -90,10 +90,17 @@ func (t *teamAPI) getTeam(w http.ResponseWriter, r *http.Request) {
 		zap.String("request.id", middleware.GetReqID(r.Context())),
 		zap.String("team.id", teamID))
 
-	team, matches, err := t.backend.Get(r.Context(), teamID)
+	team, err := t.backend.GetTeam(r.Context(), teamID)
 	if err != nil { // TODO better responses
 		log.Error("failed to find team", zap.Error(err))
 		res.R(w, r, res.ErrInternalServer("failed to find team", err))
+		return
+	}
+
+	matches, err := t.backend.GetMatches(r.Context(), teamID)
+	if err != nil { // TODO better responses
+		log.Error("failed to find matches", zap.Error(err))
+		res.R(w, r, res.ErrInternalServer("failed to find matches", err))
 		return
 	}
 

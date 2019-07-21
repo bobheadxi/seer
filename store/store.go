@@ -7,23 +7,26 @@ import (
 	"sort"
 	"strings"
 
+	"go.bobheadxi.dev/seer/analytics"
 	"go.bobheadxi.dev/seer/riot"
 )
 
 // Store defines the contract different storage backends for Seer should have
 type Store interface {
 	Create(ctx context.Context, teamID string, team *Team) error
-
-	Get(ctx context.Context, teamID string) (*Team, Matches, error)
 	Add(ctx context.Context, teamID string, matches Matches) error
+
+	GetTeam(ctx context.Context, teamID string) (*Team, error)
+	GetMatches(ctx context.Context, teamID string) (Matches, error)
 
 	// LastUpdated(ctx context.Context, teamID string) (*time.Time, error)
 }
 
 // Team represents a team
 type Team struct {
-	Region  riot.Region      `json:"region"`
-	Members []*riot.Summoner `json:"members"`
+	Region    riot.Region          `json:"region"`
+	Members   []*riot.Summoner     `json:"members"`
+	Analytics *analytics.Analytics `json:"analytics"`
 }
 
 // GenerateTeamID generates a new team ID for this team based on its region and

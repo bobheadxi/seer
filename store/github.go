@@ -30,13 +30,17 @@ type gitHubStore struct {
 	repo config.GitHubStoreRepo
 
 	teams *teamsToIDCache
+}
 
-	// versionID *int
+// GitHubStoreOpts provides options for GitHub store
+type GitHubStoreOpts struct {
+	Auth oauth2.TokenSource
+	Repo config.GitHubStoreRepo
 }
 
 // NewGitHubStore instantiates a new Store backed by GitHub issues
-func NewGitHubStore(ctx context.Context, l *zap.Logger, auth oauth2.TokenSource, repo config.GitHubStoreRepo) (Store, error) {
-	c := github.NewClient(oauth2.NewClient(ctx, auth))
+func NewGitHubStore(ctx context.Context, l *zap.Logger, opts GitHubStoreOpts) (Store, error) {
+	c := github.NewClient(oauth2.NewClient(ctx, opts.Auth))
 
 	lims, _, err := c.RateLimits(ctx)
 	if err != nil {
@@ -44,37 +48,14 @@ func NewGitHubStore(ctx context.Context, l *zap.Logger, auth oauth2.TokenSource,
 	}
 	l.Info("rate limit check ok", zap.Any("githubapi.ratelimits", lims))
 
-	/*
-		versions, _, err := c.Issues.ListMilestones(ctx, repo.Owner, repo.Repo, &github.MilestoneListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		var versionID int
-		var found bool
-		for _, v := range versions {
-			if v.GetTitle() == schemaVersion {
-				found = true
-				versionID = int(v.GetID())
-			}
-		}
-		if !found {
-			milestone, _, err := c.Issues.CreateMilestone(ctx, repo.Owner, repo.Repo, &github.Milestone{
-				Title:       github.String("schema:" + schemaVersion),
-				Description: github.String("metadata milestone for indicating schema version of an issue"),
-			})
-			if err != nil {
-				return nil, err
-			}
-			versionID = int(milestone.GetID())
-		}
-	*/
-
 	return &gitHubStore{
-		l:     l,
-		c:     c,
-		teams: &teamsToIDCache{cache.New(cacheTTLMins*time.Minute, cacheTTLMins*time.Minute), c, repo},
-		repo:  repo,
-		// versionID: &versionID,
+		l: l,
+		c: c,
+		teams: &teamsToIDCache{
+			cache.New(cacheTTLMins*time.Minute, cacheTTLMins*time.Minute),
+			c, opts.Repo,
+		},
+		repo: opts.Repo,
 	}, nil
 }
 
@@ -130,28 +111,46 @@ func (g *gitHubStore) Create(ctx context.Context, teamID string, team *Team) err
 	return nil
 }
 
-func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, Matches, error) {
-	log := g.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
+func (g *gitHubStore) GetTeam(ctx context.Context, teamID string) (*Team, error) {
+	log := g.l.With(
+		zap.String("operation", "get_team"),
+		zap.String("request.id", middleware.GetReqID(ctx)),
+		zap.String("team.id", teamID))
 
 	teamIssue, err := g.teams.getID(ctx, teamID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// get team from issue
 	issue, _, err := g.c.Issues.Get(ctx, g.repo.Owner, g.repo.Repo, teamIssue)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if issue == nil {
-		return nil, nil, fmt.Errorf("team %s (%d) not found", teamID, teamIssue)
+		return nil, fmt.Errorf("team %s (%d) not found", teamID, teamIssue)
 	}
 	var team Team
 	if err := json.Unmarshal([]byte(issue.GetBody()), &team); err != nil {
 		log.Error("could not read team contents", zap.Error(err),
 			zap.Int("issue.number", teamIssue),
 			zap.Any("issue.received", issue))
-		return nil, nil, err
+		return nil, err
+	}
+
+	log.Info("team retrieved")
+	return &team, nil
+}
+
+func (g *gitHubStore) GetMatches(ctx context.Context, teamID string) (Matches, error) {
+	log := g.l.With(
+		zap.String("operation", "get_matches"),
+		zap.String("request.id", middleware.GetReqID(ctx)),
+		zap.String("team.id", teamID))
+
+	teamIssue, err := g.teams.getID(ctx, teamID)
+	if err != nil {
+		return nil, err
 	}
 
 	// get matches from comments
@@ -164,7 +163,7 @@ func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, Matches, e
 			},
 		})
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		log.Info("found comments",
 			zap.Int("comments", len(comments)),
@@ -194,12 +193,15 @@ func (g *gitHubStore) Get(ctx context.Context, teamID string) (*Team, Matches, e
 	}
 	sort.Sort(matches)
 
-	log.Info("team retrieved", zap.Int("matches", len(matches)))
-	return &team, matches, nil
+	log.Info("matches retrieved", zap.Int("matches", len(matches)))
+	return matches, nil
 }
 
 func (g *gitHubStore) Add(ctx context.Context, teamID string, matches Matches) error {
-	log := g.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
+	log := g.l.With(
+		zap.String("operation", "add"),
+		zap.String("request.id", middleware.GetReqID(ctx)),
+		zap.String("team.id", teamID))
 
 	teamIssue, err := g.teams.getID(ctx, teamID)
 	if err != nil {
@@ -226,11 +228,6 @@ func (g *gitHubStore) Add(ctx context.Context, teamID string, matches Matches) e
 
 	log.Info("matches added", zap.Int("matches.count", added))
 	return nil
-}
-
-// TODO: need?
-func (g *gitHubStore) LastUpdated(ctx context.Context, teamID string) (*time.Time, error) {
-	return nil, nil
 }
 
 type teamsToIDCache struct {

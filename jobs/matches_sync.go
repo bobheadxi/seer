@@ -59,10 +59,16 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 
 	// get known team data
 	log.Debug("looking for known team data")
-	team, storedMatches, err := m.Store.Get(ctx, teamID)
+	team, err := m.Store.GetTeam(ctx, teamID)
 	if err != nil {
 		log.Error("failed to find team", zap.Error(err))
 		return fmt.Errorf("error while looking for team in store: %v", err)
+	}
+
+	storedMatches, err := m.Store.GetMatches(ctx, teamID)
+	if err != nil {
+		log.Error("failed to find matches", zap.Error(err))
+		return fmt.Errorf("error while looking for matches in store: %v", err)
 	}
 
 	// see what matches have already been tracked
