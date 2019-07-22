@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -14,6 +15,9 @@ func main() {
 	// load up configuration
 	flags, err := config.LoadFlags(os.Args[1:])
 	if err != nil {
+		if strings.Contains(err.Error(), "help requested") {
+			return
+		}
 		panic(err)
 	}
 	cfg := config.NewEnvConfig()
@@ -31,7 +35,7 @@ func main() {
 	defer log.Sync()
 
 	// report basic config
-	log.Info("configuration loaded",
+	log.Debug("configuration loaded",
 		zap.Any("config", cfg),
 		zap.Any("meta", meta),
 		zap.Any("flags", flags))

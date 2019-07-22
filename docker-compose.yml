@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: -jobs-ui=8081
+    command: -jobs-ui=8081 -store=hybrid-bigquery
     ports:
       - "8080:8080" # API
       - "8081:8081" # job monitor

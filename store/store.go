@@ -20,6 +20,8 @@ type Store interface {
 	GetMatches(ctx context.Context, teamID string) (Matches, error)
 
 	// LastUpdated(ctx context.Context, teamID string) (*time.Time, error)
+
+	Close() error
 }
 
 // Team represents a team

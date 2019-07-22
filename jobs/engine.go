@@ -36,14 +36,6 @@ func NewJobsEngine(l *zap.Logger, app string, redisPool *redis.Pool, b *BaseJobC
 		// Backoff:
 	}, matchesSync.Run)
 
-	teamAnalytics := &teamAnalyticsContext{l.Named("team_analytics"), b}
-	pool.JobWithOptions(jobTeamAnalytics, work.JobOptions{
-		Priority: 5,
-		MaxFails: 3,
-		// TODO: create backoff calculator that checks for rate limits
-		// Backoff:
-	}, teamAnalytics.Run)
-
 	return &engine{
 		l:    l,
 		pool: pool,

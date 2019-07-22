@@ -227,8 +227,13 @@ func (g *gitHubStore) Add(ctx context.Context, teamID string, matches Matches) e
 	}
 
 	log.Info("matches added", zap.Int("matches.count", added))
+
+	// TODO: backport analytics features
+
 	return nil
 }
+
+func (g *gitHubStore) Close() error { return nil }
 
 type teamsToIDCache struct {
 	cache *cache.Cache

@@ -19,6 +19,16 @@ const (
 	ModeJobsUIOnly Mode = "jobs-ui-only"
 )
 
+// Store denotes the backend store to use
+type Store string
+
+const (
+	// StoreGitHub is the GitHub backend
+	StoreGitHub Store = "github"
+	// StoreHybridBigQuery uses a hybrid GitHub and BigQuery backend
+	StoreHybridBigQuery Store = "hybrid-bigquery"
+)
+
 // Flags contains command-line flag configuration
 type Flags struct {
 	Dev        bool
@@ -26,11 +36,15 @@ type Flags struct {
 	JobsUIPort string
 	APIPort    string
 
-	mode string
+	mode  string
+	store string
 }
 
 // Mode returns the configured operational mode
 func (f Flags) Mode() Mode { return Mode(f.mode) }
+
+// Store returns the configured storage backend
+func (f Flags) Store() Store { return Store(f.store) }
 
 // LoadFlags loads flags from the given set of arguments
 func LoadFlags(args []string) (Flags, error) {
@@ -42,5 +56,9 @@ func LoadFlags(args []string) (Flags, error) {
 	flags.StringVar(&v.APIPort, "port", "8080", "port to serve Seer API on")
 
 	flags.StringVar(&v.mode, "mode", string(ModeAll), "operation mode to run in")
+
+	// TODO update default
+	flags.StringVar(&v.store, "store", string(StoreGitHub), "storage backend to use")
+
 	return v, flags.Parse(args)
 }

@@ -6,18 +6,27 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/option"
 )
 
 // Config exposes server configuration
 type Config struct {
+	// Redis
 	RedisNamespace string
 	RedisURL       string // redis conn string
 	RedisAddr      string
 
+	// Riot API
 	RiotAPIToken string // TODO: need a mechanism to update this
 
+	// GitHub
 	GitHubToken     string
 	GitHubStoreRepo GitHubStoreRepo
+
+	// Google Cloud
+	GCPProjectID   string
+	GCPCredentials string
+	BigQuery       BigQuery
 }
 
 // NewEnvConfig instatiates configuration from environment
@@ -33,6 +42,13 @@ func NewEnvConfig() Config {
 		GitHubStoreRepo: GitHubStoreRepo{
 			Owner: os.Getenv("GITHUB_STORE_OWNER"),
 			Repo:  os.Getenv("GITHUB_STORE_REPO"),
+		},
+
+		GCPProjectID:   os.Getenv("GCP_PROJECT_ID"),
+		GCPCredentials: os.Getenv("GCP_CREDENTIALS"),
+		BigQuery: BigQuery{
+			DatasetID:      os.Getenv("BIGQUERY_DATASET_ID"),
+			MatchesTableID: os.Getenv("BIGQUERY_TABLE_ID_MATCHES"),
 		},
 	}
 }
@@ -55,6 +71,17 @@ func (c *Config) DefaultRedisPool(opts ...redis.DialOption) *redis.Pool {
 		IdleTimeout: 240 * time.Second,
 		Dial:        dialFunc,
 	}
+}
+
+// GCPConnOpts returns options needed to connect to GCP services
+func (c *Config) GCPConnOpts() []option.ClientOption {
+	var opts []option.ClientOption
+	if c.GCPCredentials != "" {
+		opts = []option.ClientOption{
+			option.WithCredentialsJSON([]byte(c.GCPCredentials)),
+		}
+	}
+	return opts
 }
 
 func firstOf(vars ...string) string {

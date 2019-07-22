@@ -16,6 +16,10 @@ lint:
 web:
 	cd web ; npm run serve:prod
 
+.PHONY: dev-web
+dev-web:
+	cd web ; npm run serve
+
 .PHONY: docs
 docs:
 	cd web ; npm run build

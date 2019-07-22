@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
-
 	"go.bobheadxi.dev/seer/config"
 	"go.bobheadxi.dev/seer/jobs"
 	"go.bobheadxi.dev/seer/riot"
-	"go.bobheadxi.dev/seer/store"
 	"go.uber.org/zap"
 )
 
@@ -17,21 +14,27 @@ func startWorker(
 	meta config.BuildMeta,
 ) {
 	log.Info("instantiating dependencies")
+
+	// riot api
 	rc, err := riot.NewClient(log.Named("riot"), cfg.RiotAPIToken)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	bs, err := store.NewGitHubStore(context.Background(), log, store.GitHubStoreOpts{
-		Auth: cfg.GitHubAPITokenSource(), Repo: cfg.GitHubStoreRepo,
-	})
+
+	// storage backend
+	s, err := newStorageBackend(log, flags.Store(), cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	// jobs engine
 	je := jobs.NewJobsEngine(log, cfg.RedisNamespace, cfg.DefaultRedisPool(), &jobs.BaseJobContext{
 		RiotAPI: rc,
-		Store:   bs,
+		Store:   s,
 	})
-
 	log.Info("spinning up jobs engine")
 	go je.Start()
 	<-newStopper()
