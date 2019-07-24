@@ -16,11 +16,12 @@ import (
 )
 
 func TestBigQuery_Integration(t *testing.T) {
-	if os.Getenv("BIGQUERY_INTEGRATION") != "true" {
-		//t.Skip("BIGQUERY_INTEGRATION not set to true")
-	}
 	godotenv.Load("../.env")
+	if os.Getenv("BIGQUERY_INTEGRATION") != "true" {
+		t.Skip("BIGQUERY_INTEGRATION not set to true")
+	}
 
+	// set up
 	ctx := context.Background()
 	l := zaptest.NewLogger(t)
 	cfg := config.NewEnvConfig()

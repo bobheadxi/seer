@@ -3,7 +3,7 @@ package riot
 import (
 	"context"
 	"encoding/json"
-	"strings"
+	"sort"
 )
 
 // API exposes the top-level client
@@ -222,9 +222,18 @@ type (
 // Fields must contain only letters, numbers, and underscores, start with a
 // letter or underscore, and be at most 128 characters long
 func (d Deltas) MarshalJSON() ([]byte, error) {
-	clone := make(map[string]float64, len(d))
-	for k, v := range d {
-		clone["t"+strings.ReplaceAll(k, "-", "_")] = v
+	keys := make([]string, len(d))
+	var i int
+	for k := range d {
+		keys[i] = k
+		i++
 	}
-	return json.Marshal(&clone)
+	sort.Strings(keys)
+
+	timeline := make([]float64, len(keys))
+	for i, k := range keys {
+		timeline[i] = d[k]
+	}
+
+	return json.Marshal(&timeline)
 }
