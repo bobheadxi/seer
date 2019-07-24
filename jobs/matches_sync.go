@@ -74,7 +74,7 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 	// see what matches have already been tracked
 	knownMatches := make(map[int64]bool)
 	for _, match := range storedMatches {
-		knownMatches[match.Details.GameID] = true
+		knownMatches[match] = true
 	}
 
 	// check for shared matches

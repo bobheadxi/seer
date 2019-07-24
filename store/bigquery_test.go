@@ -34,10 +34,16 @@ func TestBigQuery_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	// delete table
+	table := bqs.(*hybridBigQueryStore).bqMatchesTable()
+	table.Delete(ctx)
+
+	// read test data
 	var match1, match2 riot.MatchDetails
 	require.NoError(t, json.Unmarshal([]byte(testMatch1), &match1))
 	require.NoError(t, json.Unmarshal([]byte(testMatch2), &match2))
 
+	// upload test data
 	require.NoError(t, bqs.Add(ctx, "integration-test", Matches{{&match1}, {&match2}}))
 }
 

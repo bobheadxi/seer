@@ -66,7 +66,7 @@ func (s *hybridBigQueryStore) GetTeam(ctx context.Context, teamID string) (*Team
 	return s.gh.GetTeam(ctx, teamID)
 }
 
-func (s *hybridBigQueryStore) GetMatches(ctx context.Context, teamID string) (Matches, error) {
+func (s *hybridBigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64, error) {
 	// TODO: get matches from BigQuery
 	return nil, nil
 }

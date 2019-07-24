@@ -142,7 +142,7 @@ func (g *gitHubStore) GetTeam(ctx context.Context, teamID string) (*Team, error)
 	return &team, nil
 }
 
-func (g *gitHubStore) GetMatches(ctx context.Context, teamID string) (Matches, error) {
+func (g *gitHubStore) GetMatches(ctx context.Context, teamID string) ([]int64, error) {
 	log := g.l.With(
 		zap.String("operation", "get_matches"),
 		zap.String("request.id", middleware.GetReqID(ctx)),
@@ -154,7 +154,7 @@ func (g *gitHubStore) GetMatches(ctx context.Context, teamID string) (Matches, e
 	}
 
 	// get matches from comments
-	matches := make(Matches, 0)
+	matches := make([]int64, 0)
 	for page := 1; page != 0; {
 		comments, resp, err := g.c.Issues.ListComments(ctx, g.repo.Owner, g.repo.Repo, teamIssue, &github.IssueListCommentsOptions{
 			ListOptions: github.ListOptions{
@@ -186,12 +186,9 @@ func (g *gitHubStore) GetMatches(ctx context.Context, teamID string) (Matches, e
 					zap.String("comment.url", c.GetURL()))
 				continue
 			}
-			matches = append(matches, MatchData{
-				Details: &details,
-			})
+			matches = append(matches, details.GameID)
 		}
 	}
-	sort.Sort(matches)
 
 	log.Info("matches retrieved", zap.Int("matches", len(matches)))
 	return matches, nil

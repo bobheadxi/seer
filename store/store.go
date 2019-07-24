@@ -17,7 +17,7 @@ type Store interface {
 	Add(ctx context.Context, teamID string, matches Matches) error
 
 	GetTeam(ctx context.Context, teamID string) (*Team, error)
-	GetMatches(ctx context.Context, teamID string) (Matches, error)
+	GetMatches(ctx context.Context, teamID string) ([]int64, error)
 
 	// LastUpdated(ctx context.Context, teamID string) (*time.Time, error)
 
