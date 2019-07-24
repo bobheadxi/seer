@@ -1,6 +1,10 @@
 package riot
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"strings"
+)
 
 // API exposes the top-level client
 type API interface {
@@ -192,20 +196,35 @@ type (
 			Spell2ID                  int    `json:"spell2Id"`
 			TeamID                    int    `json:"teamId"`
 			Timeline                  struct {
-				ParticipantID               int                `json:"participantId"`
-				Lane                        string             `json:"lane"`
-				Role                        string             `json:"role"`
-				CsDiffPerMinDeltas          map[string]float64 `json:"csDiffPerMinDeltas"`
-				GoldPerMinDeltas            map[string]float64 `json:"goldPerMinDeltas"`
-				XpDiffPerMinDeltas          map[string]float64 `json:"xpDiffPerMinDeltas"`
-				CreepsPerMinDeltas          map[string]float64 `json:"creepsPerMinDeltas"`
-				XpPerMinDeltas              map[string]float64 `json:"xpPerMinDeltas"`
-				DamageTakenDiffPerMinDeltas map[string]float64 `json:"damageTakenDiffPerMinDeltas"`
-				DamageTakenPerMinDeltas     map[string]float64 `json:"damageTakenPerMinDeltas"`
+				ParticipantID               int    `json:"participantId"`
+				Lane                        string `json:"lane"`
+				Role                        string `json:"role"`
+				CsDiffPerMinDeltas          Deltas `json:"csDiffPerMinDeltas"`
+				GoldPerMinDeltas            Deltas `json:"goldPerMinDeltas"`
+				XpDiffPerMinDeltas          Deltas `json:"xpDiffPerMinDeltas"`
+				CreepsPerMinDeltas          Deltas `json:"creepsPerMinDeltas"`
+				XpPerMinDeltas              Deltas `json:"xpPerMinDeltas"`
+				DamageTakenDiffPerMinDeltas Deltas `json:"damageTakenDiffPerMinDeltas"`
+				DamageTakenPerMinDeltas     Deltas `json:"damageTakenPerMinDeltas"`
 			} `json:"timeline"`
 			ChampionID int `json:"championId"`
 		} `json:"participants"`
 		GameDuration int   `json:"gameDuration"`
 		GameCreation int64 `json:"gameCreation"`
 	}
+
+	// Deltas represent match timeline deltas
+	Deltas map[string]float64
 )
+
+// MarshalJSON provides a bigquery-compatible version of deltas
+//
+// Fields must contain only letters, numbers, and underscores, start with a
+// letter or underscore, and be at most 128 characters long
+func (d Deltas) MarshalJSON() ([]byte, error) {
+	clone := make(map[string]float64, len(d))
+	for k, v := range d {
+		clone["t"+strings.ReplaceAll(k, "-", "_")] = v
+	}
+	return json.Marshal(&clone)
+}

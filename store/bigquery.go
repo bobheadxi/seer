@@ -3,10 +3,12 @@ package store
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/gocarina/gocsv"
+	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 
@@ -35,7 +37,7 @@ type BigQueryOpts struct {
 func NewHybridBigQueryStore(ctx context.Context, l *zap.Logger, bqOpts BigQueryOpts, ghOpts GitHubStoreOpts) (Store, error) {
 	ghStore, err := NewGitHubStore(ctx, l.Named("gh"), ghOpts)
 	if err != nil {
-		return nil, fmt.Errorf("hybrid-store: failed to init github store: %v", err)
+		//return nil, fmt.Errorf("hybrid-store: failed to init github store: %v", err)
 	}
 
 	l.Info("initializing BigQuery client",
@@ -43,7 +45,7 @@ func NewHybridBigQueryStore(ctx context.Context, l *zap.Logger, bqOpts BigQueryO
 		zap.Any("data_opts", bqOpts.DataOpts))
 	bqc, err := bigquery.NewClient(ctx, bqOpts.ProjectID, bqOpts.ConnOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("hybrid-store: failed to initialize bigquery client: %v", err)
+		//return nil, fmt.Errorf("hybrid-store: failed to initialize bigquery client: %v", err)
 	}
 
 	return &hybridBigQueryStore{
@@ -70,17 +72,30 @@ func (s *hybridBigQueryStore) GetMatches(ctx context.Context, teamID string) (Ma
 }
 
 func (s *hybridBigQueryStore) Add(ctx context.Context, teamID string, matches Matches) error {
-	// convert matches into a BiqQuery data source for upload
+	log := s.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
+	opTimer := time.Now()
+	defer log.Info("add complete", zap.Duration("duration", time.Since(opTimer)))
+
+	// convert matches into a BigQuery compatible json document (new-line demited)
+	timer := time.Now()
 	var buf bytes.Buffer
-	if err := gocsv.Marshal(matches, &buf); err != nil {
-		return fmt.Errorf("failed to marshal matches as csv: %v", err)
+	for _, m := range matches {
+		bytes, err := json.Marshal(&m)
+		if err != nil {
+			log.Error("failed to unmarshal a match",
+				zap.Error(err),
+				zap.Any("match", m))
+		}
+		buf.Write(bytes)
+		buf.WriteRune('\n')
 	}
+	log.Info("marshal complete", zap.Duration("duration", time.Since(timer)))
+
+	// create BiqQuery data source for upload
+	timer = time.Now()
 	data := bigquery.NewReaderSource(&buf)
-	data.SourceFormat = bigquery.CSV
-	data.SkipLeadingRows = 1
+	data.SourceFormat = bigquery.JSON
 	data.AutoDetect = true
-	// TODO: it seems like a schema must be defined qq for nested objects.
-	// maybe consider multiple tables and join?
 
 	// run upload
 	// TODO: there are somewhat strict limitations on this: https://cloud.google.com/bigquery/quotas#load_jobs
@@ -97,6 +112,7 @@ func (s *hybridBigQueryStore) Add(ctx context.Context, teamID string, matches Ma
 	if err := status.Err(); err != nil {
 		return fmt.Errorf("data load job completed with error: %v", err)
 	}
+	log.Info("upload complete", zap.Duration("duration", time.Since(timer)))
 
 	// TODO: run and update analytics in GitHub team issue. or use a view:
 	// https://cloud.google.com/bigquery/docs/views
