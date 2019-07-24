@@ -217,10 +217,14 @@ type (
 	Deltas map[string]float64
 )
 
-// MarshalJSON provides a bigquery-compatible version of deltas
+// MarshalJSON provides a bigquery-compatible version of deltas. The marshalled
+// output is an array of values in 10-minute intervals, sorted:
 //
-// Fields must contain only letters, numbers, and underscores, start with a
-// letter or underscore, and be at most 128 characters long
+//   0-10, 20-30, 30-40, 40-end
+// [  1,     2,     3,      4   ]
+//
+// This is easier to select in BigQuery. For now means cannot SELECT * and
+// unmarshal back into Deltas
 func (d Deltas) MarshalJSON() ([]byte, error) {
 	keys := make([]string, len(d))
 	var i int
