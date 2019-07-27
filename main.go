@@ -20,7 +20,10 @@ func main() {
 		}
 		panic(err)
 	}
-	cfg := config.NewEnvConfig()
+	cfg, err := config.NewEnvConfig()
+	if err != nil {
+		panic(err)
+	}
 	meta := config.NewBuildMeta()
 
 	// init logger

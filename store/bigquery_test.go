@@ -24,7 +24,8 @@ func TestBigQuery_Integration(t *testing.T) {
 	// set up
 	ctx := context.Background()
 	l := zaptest.NewLogger(t)
-	cfg := config.NewEnvConfig()
+	cfg, err := config.NewEnvConfig()
+	require.NoError(t, err)
 	cfg.BigQuery.MatchesTableID = "matches_integration_test"
 	bqs, err := NewHybridBigQueryStore(ctx, l, BigQueryOpts{
 		ProjectID: cfg.GCPProjectID,

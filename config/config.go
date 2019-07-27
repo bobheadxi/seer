@@ -1,9 +1,9 @@
 package config
 
 import (
-	"os"
 	"time"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/gomodule/redigo/redis"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
@@ -12,45 +12,27 @@ import (
 // Config exposes server configuration
 type Config struct {
 	// Redis
-	RedisNamespace string
-	RedisURL       string // redis conn string
-	RedisAddr      string
+	RedisNamespace string `env:"REDIS_NAMESPACE,required"`
+	RedisURL       string `env:"REDIS_URL"` // redis conn string
+	RedisAddr      string `env:"REDIS_ADDR"`
 
 	// Riot API
-	RiotAPIToken string // TODO: need a mechanism to update this
+	RiotAPIToken string `env:"RIOT_API_TOKEN,required"` // TODO: need a mechanism to update this
 
 	// GitHub
-	GitHubToken     string
+	GitHubToken     string `env:"GITHUB_TOKEN,required"`
 	GitHubStoreRepo GitHubStoreRepo
 
 	// Google Cloud
-	GCPProjectID   string
-	GCPCredentials string
+	GCPProjectID   string `env:"GCP_PROJECT_ID"`
+	GCPCredentials string `env:"GCP_CREDENTIALS"`
 	BigQuery       BigQuery
 }
 
 // NewEnvConfig instatiates configuration from environment
-func NewEnvConfig() Config {
-	return Config{
-		RedisNamespace: os.Getenv("REDIS_NAMESPACE"),
-		RedisURL:       os.Getenv("REDIS_URL"),
-		RedisAddr:      os.Getenv("REDIS_ADDR"),
-
-		RiotAPIToken: os.Getenv("RIOT_API_TOKEN"),
-		GitHubToken:  os.Getenv("GITHUB_TOKEN"),
-
-		GitHubStoreRepo: GitHubStoreRepo{
-			Owner: os.Getenv("GITHUB_STORE_OWNER"),
-			Repo:  os.Getenv("GITHUB_STORE_REPO"),
-		},
-
-		GCPProjectID:   os.Getenv("GCP_PROJECT_ID"),
-		GCPCredentials: os.Getenv("GCP_CREDENTIALS"),
-		BigQuery: BigQuery{
-			DatasetID:      os.Getenv("BIGQUERY_DATASET_ID"),
-			MatchesTableID: os.Getenv("BIGQUERY_TABLE_ID_MATCHES"),
-		},
-	}
+func NewEnvConfig() (Config, error) {
+	var cfg Config
+	return cfg, env.Parse(&cfg)
 }
 
 // GitHubAPITokenSource inits a static token source from this configuration

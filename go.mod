@@ -5,6 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go v0.43.0
 	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd // indirect
+	github.com/caarlos0/env/v6 v6.0.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/gocraft/web v0.0.0-20190207150652-9707327fb69b // indirect

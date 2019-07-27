@@ -2,6 +2,6 @@ package config
 
 // BigQuery denotes Google BigQuery options
 type BigQuery struct {
-	DatasetID      string
-	MatchesTableID string
+	DatasetID      string `env:"BIGQUERY_DATASET_ID"`
+	MatchesTableID string `env:"BIGQUERY_TABLE_ID_MATCHES"`
 }
