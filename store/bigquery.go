@@ -58,13 +58,15 @@ func NewBigQueryStore(ctx context.Context, l *zap.Logger, bqOpts BigQueryOpts) (
 
 func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) error {
 	log := s.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
+	opTimer := time.Now()
+	defer logDuration(log, "team create complete", "Create.duration", opTimer)
 
 	// format data
 	members := make([]string, len(team.Members))
 	for i, m := range team.Members {
 		members[i] = fmt.Sprintf("'%s'", m.AccountID)
 	}
-	teamBytes, err := json.Marshal(team.Members)
+	membersBytes, err := json.Marshal(team.Members)
 	if err != nil {
 		return err
 	}
@@ -75,8 +77,8 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 		return err
 	}
 	view := &bigquery.TableMetadata{
-		Name:        "", // TODO?
-		Description: string(teamBytes),
+		Name:        "", // TODO? this could be pretty-name
+		Description: string(membersBytes),
 		Labels: map[string]string{
 			"team":   teamID,
 			"region": team.Region.ToLower(),
@@ -91,7 +93,8 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 
 	// create view
 	log.Info("creating team view in BigQuery",
-		zap.String("table_id", teamView(teamID)))
+		zap.String("table_id", teamView(teamID)),
+		zap.Strings("members", members))
 	if err := s.bqDataset().Table(teamView(teamID)).Create(ctx, view); err != nil {
 		return fmt.Errorf("unable to create team: %v", err)
 	}
@@ -122,6 +125,10 @@ func (s *bigQueryStore) GetTeam(ctx context.Context, teamID string) (*Team, erro
 }
 
 func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64, error) {
+	log := s.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
+	opTimer := time.Now()
+	defer logDuration(log, "matches get complete", "GetMatches.duration", opTimer)
+
 	rawQuery, err := bigqueries.ReadFile(bigqueries.TeamGamesQuery)
 	if err != nil {
 		return nil, err
@@ -131,7 +138,15 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 		s.cfg.DatasetID,
 		teamView(teamID)))
 
-	it, err := query.Read(ctx)
+	// execute query
+	job, stats, err := s.execQuery(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("query for matches complete", zap.Any("stats", stats))
+
+	// parse results
+	it, err := job.Read(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +173,7 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 func (s *bigQueryStore) Add(ctx context.Context, teamID string, matches Matches) error {
 	log := s.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
 	opTimer := time.Now()
-	defer log.Info("add complete", zap.Duration("duration", time.Since(opTimer)))
+	defer logDuration(log, "matches add complete", "Add.duration", opTimer)
 
 	// convert matches into a BigQuery compatible json document (new-line demited)
 	timer := time.Now()
@@ -212,6 +227,32 @@ func (s *bigQueryStore) bqMatchesTable() *bigquery.Table {
 
 func (s *bigQueryStore) bqTeamView(teamID string) *bigquery.Table {
 	return s.bqDataset().Table(teamView(teamID))
+}
+
+func (s *bigQueryStore) execQuery(
+	ctx context.Context,
+	query *bigquery.Query,
+) (*bigquery.Job, *bigquery.QueryStatistics, error) {
+	job, err := query.Run(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	status, err := job.Wait(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := status.Err(); err != nil {
+		return nil, nil, err
+	}
+	if status.Statistics == nil {
+		return nil, nil, errors.New("no statistics attached to query")
+	}
+	queryStats, ok := status.Statistics.Details.(*bigquery.QueryStatistics)
+	if !ok {
+		return nil, nil, fmt.Errorf("did not receive query stats, got %T", status.Statistics.Details)
+	}
+
+	return job, queryStats, nil
 }
 
 func teamView(teamID string) string { return fmt.Sprintf("team_%s", teamID) }
