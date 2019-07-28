@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
@@ -66,11 +67,9 @@ func TestBigQuery_Integration(t *testing.T) {
 	})
 
 	// get matches
-	// TODO: this doesnt work
 	t.Run("GetMatches()", func(t *testing.T) {
 		matches, err := bqs.GetMatches(ctx, testTeam)
 		require.NoError(t, err)
-		t.Log(matches)
-		require.NotEmpty(t, matches)
+		assert.ElementsMatch(t, []int64{3072165694, 3059336276, 3057579582}, matches)
 	})
 }

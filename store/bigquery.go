@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -137,12 +138,13 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 	var matches []int64
 	for {
 		var values []bigquery.Value
-		err := it.Next(&values)
-		if err == iterator.Done {
+		if err := it.Next(&values); err == iterator.Done {
 			break
+		} else if err != nil {
+			return nil, fmt.Errorf("failed to fetch next row: %+v", err)
 		}
-		if err != nil {
-			return nil, err
+		if len(values) == 0 {
+			return nil, errors.New("unexpected empty value in query response")
 		}
 		id, ok := values[0].(int64)
 		if !ok {
@@ -150,7 +152,7 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 		}
 		matches = append(matches, id)
 	}
-	return nil, nil
+	return matches, nil
 }
 
 func (s *bigQueryStore) Add(ctx context.Context, teamID string, matches Matches) error {
