@@ -84,6 +84,24 @@ type (
 			DragonKills          int    `json:"dragonKills"`
 		} `json:"teams"`
 		Participants []struct {
+			ParticipantID             int    `json:"participantId"`
+			TeamID                    int    `json:"teamId"`
+			ChampionID                int    `json:"championId"`
+			HighestAchievedSeasonTier string `json:"highestAchievedSeasonTier,omitempty"`
+			Spell1ID                  int    `json:"spell1Id"`
+			Spell2ID                  int    `json:"spell2Id"`
+			Timeline                  struct {
+				ParticipantID               int    `json:"participantId"`
+				Lane                        string `json:"lane"`
+				Role                        string `json:"role"`
+				CsDiffPerMinDeltas          Deltas `json:"csDiffPerMinDeltas"`
+				GoldPerMinDeltas            Deltas `json:"goldPerMinDeltas"`
+				XpDiffPerMinDeltas          Deltas `json:"xpDiffPerMinDeltas"`
+				CreepsPerMinDeltas          Deltas `json:"creepsPerMinDeltas"`
+				XpPerMinDeltas              Deltas `json:"xpPerMinDeltas"`
+				DamageTakenDiffPerMinDeltas Deltas `json:"damageTakenDiffPerMinDeltas"`
+				DamageTakenPerMinDeltas     Deltas `json:"damageTakenPerMinDeltas"`
+			} `json:"timeline"`
 			Stats struct {
 				NeutralMinionsKilledTeamJungle  int  `json:"neutralMinionsKilledTeamJungle"`
 				VisionScore                     int  `json:"visionScore"`
@@ -190,24 +208,6 @@ type (
 				TimeCCingOthers                 int  `json:"timeCCingOthers"`
 				StatPerk2                       int  `json:"statPerk2"`
 			} `json:"stats"`
-			Spell1ID                  int    `json:"spell1Id"`
-			ParticipantID             int    `json:"participantId"`
-			HighestAchievedSeasonTier string `json:"highestAchievedSeasonTier,omitempty"`
-			Spell2ID                  int    `json:"spell2Id"`
-			TeamID                    int    `json:"teamId"`
-			Timeline                  struct {
-				ParticipantID               int    `json:"participantId"`
-				Lane                        string `json:"lane"`
-				Role                        string `json:"role"`
-				CsDiffPerMinDeltas          Deltas `json:"csDiffPerMinDeltas"`
-				GoldPerMinDeltas            Deltas `json:"goldPerMinDeltas"`
-				XpDiffPerMinDeltas          Deltas `json:"xpDiffPerMinDeltas"`
-				CreepsPerMinDeltas          Deltas `json:"creepsPerMinDeltas"`
-				XpPerMinDeltas              Deltas `json:"xpPerMinDeltas"`
-				DamageTakenDiffPerMinDeltas Deltas `json:"damageTakenDiffPerMinDeltas"`
-				DamageTakenPerMinDeltas     Deltas `json:"damageTakenPerMinDeltas"`
-			} `json:"timeline"`
-			ChampionID int `json:"championId"`
 		} `json:"participants"`
 		GameDuration int   `json:"gameDuration"`
 		GameCreation int64 `json:"gameCreation"`

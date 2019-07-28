@@ -25,8 +25,8 @@ type Store string
 const (
 	// StoreGitHub is the GitHub backend
 	StoreGitHub Store = "github"
-	// StoreHybridBigQuery uses a hybrid GitHub and BigQuery backend
-	StoreHybridBigQuery Store = "hybrid-bigquery"
+	// StoreBigQuery uses a BigQuery backend
+	StoreBigQuery Store = "bigquery"
 )
 
 // Flags contains command-line flag configuration

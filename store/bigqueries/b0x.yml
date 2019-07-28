@@ -1,0 +1,17 @@
+# all folders and files are relative to the path 
+# where fileb0x was run at!
+
+pkg: bigqueries
+dest: "."
+fmt: true
+
+# output file
+output: "compiled_queries.go"
+noprefix: true
+
+# files
+custom:
+  - files: 
+    # everything inside the folder
+    # type: array of strings
+    - "./sql"
