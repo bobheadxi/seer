@@ -92,3 +92,11 @@ func (c *regionalClient) MatchDetails(ctx context.Context, matchID string) (*Mat
 		nil,
 		&details)
 }
+
+func (c *regionalClient) MatchTimeline(ctx context.Context, matchID string) (*MatchTimeline, error) {
+	var details MatchTimeline
+	return &details, c.http.Get(ctx,
+		path.Join(c.host, pathTimelineByMatchID, matchID),
+		nil,
+		&details)
+}
