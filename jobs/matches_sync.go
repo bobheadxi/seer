@@ -103,17 +103,27 @@ func (m *matchesSyncContext) Run(job *work.Job) error {
 	log.Debug("querying for match details")
 	var matchesToStore []store.MatchData
 	for game, count := range discoveredMatches {
-		if count < 4 {
+		if count < 4 { // need at least 4 players from target team
 			continue
 		}
-		job.Checkin(fmt.Sprintf("game_count=%d game=%d", len(matchesToStore), game))
-		details, err := api.MatchDetails(ctx, strconv.Itoa(int(game)))
+		gameIDStr := strconv.Itoa(int(game))
+		job.Checkin(fmt.Sprintf("game_count=%d game=%s", len(matchesToStore), gameIDStr))
+
+		details, err := api.MatchDetails(ctx, gameIDStr)
 		if err != nil {
-			log.Error("failed to find game", zap.Error(err), zap.Int64("game", game))
+			log.Error("failed to find game details", zap.Error(err), zap.Int64("game", game))
 			return fmt.Errorf("error querying for match details: %v", err)
 		}
+
+		timeline, err := api.MatchTimeline(ctx, gameIDStr)
+		if err != nil {
+			log.Error("failed to find game timeline", zap.Error(err), zap.Int64("game", game))
+			return fmt.Errorf("error querying for match timeline: %v", err)
+		}
+
 		matchesToStore = append(matchesToStore, store.MatchData{
-			Details: details,
+			Details:  details,
+			Timeline: timeline,
 		})
 	}
 
