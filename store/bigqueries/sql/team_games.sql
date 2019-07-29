@@ -1,4 +1,4 @@
-SELECT
+SELECT DISTINCT
   gameId
 FROM
   /* <project>.<dataset>.<table> */

@@ -1,6 +1,9 @@
 package riot
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 type (
 	// MatchTimeline is the set of events for a match
@@ -50,13 +53,23 @@ type (
 	}
 )
 
+type participantFrames []ParticipantFrame
+
+func (f participantFrames) Len() int           { return len(f) }
+func (f participantFrames) Less(i, j int) bool { return f[i].ParticipantID < f[j].ParticipantID }
+func (f participantFrames) Swap(i, j int) {
+	tmp := f[i]
+	f[i] = f[j]
+	f[j] = tmp
+}
+
 // MarshalJSON is for BigQuery, where we can't have column names starting with
 // numbers, so pop these into an array for UNNEST
 func (f *ParticipantFrames) MarshalJSON() ([]byte, error) {
 	if f == nil {
-		return json.Marshal([]ParticipantFrame{})
+		return json.Marshal(participantFrames{})
 	}
-	return json.Marshal([]ParticipantFrame{
+	parts := participantFrames{
 		f.Participant1,
 		f.Participant2,
 		f.Participant3,
@@ -67,5 +80,7 @@ func (f *ParticipantFrames) MarshalJSON() ([]byte, error) {
 		f.Participant8,
 		f.Participant9,
 		f.Participant10,
-	})
+	}
+	sort.Sort(parts)
+	return json.Marshal(parts)
 }

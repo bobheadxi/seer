@@ -90,7 +90,6 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 			s.project,
 			s.cfg.DatasetID,
 			s.cfg.MatchesTableID),
-		// ~3 months
 		ExpirationTime: defaultExpire(),
 	}
 	log.Debug("view configuration instantiated", zap.Any("view_configuration", view))
@@ -303,4 +302,5 @@ func (s *bigQueryStore) execLoader(
 
 func teamView(teamID string) string { return fmt.Sprintf("team_%s", teamID) }
 
-func defaultExpire() time.Time { return time.Now().Add(90 * 24 * time.Hour) }
+// TODO: make longer when enabling billing
+func defaultExpire() time.Time { return time.Now().Add(50 * 24 * time.Hour) }
