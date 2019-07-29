@@ -89,6 +89,7 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 			s.project,
 			s.cfg.DatasetID,
 			s.cfg.MatchesTableID),
+		ExpirationTime: time.Now().Add(365 * 24 * time.Hour),
 	}
 	log.Debug("view configuration instantiated", zap.Any("view_configuration", view))
 
