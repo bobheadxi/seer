@@ -81,15 +81,17 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 		Name:        "", // TODO? this could be pretty-name
 		Description: string(membersBytes),
 		Labels: map[string]string{
-			"team":   teamID,
-			"region": team.Region.ToLower(),
+			"team":    teamID,
+			"region":  team.Region.ToLower(),
+			"updated": fmt.Sprint(time.Now().Unix()),
 		},
 		ViewQuery: fmt.Sprintf(string(rawQuery),
 			strings.Join(members, ","),
 			s.project,
 			s.cfg.DatasetID,
 			s.cfg.MatchesTableID),
-		ExpirationTime: time.Now().Add(365 * 24 * time.Hour),
+		// ~3 months
+		ExpirationTime: defaultExpire(),
 	}
 	log.Debug("view configuration instantiated", zap.Any("view_configuration", view))
 
@@ -232,6 +234,11 @@ func (s *bigQueryStore) Add(ctx context.Context, teamID string, matches Matches)
 			zap.Duration(fmt.Sprintf("%s.duration", set.key), time.Since(timer)))
 	}
 
+	// bump expiration for team
+	mdUpdate := bigquery.TableMetadataToUpdate{ExpirationTime: defaultExpire()}
+	mdUpdate.SetLabel("updated", fmt.Sprint(time.Now().Unix()))
+	s.bqTeamView(teamID).Update(ctx, mdUpdate, "")
+
 	return nil
 }
 
@@ -295,3 +302,5 @@ func (s *bigQueryStore) execLoader(
 }
 
 func teamView(teamID string) string { return fmt.Sprintf("team_%s", teamID) }
+
+func defaultExpire() time.Time { return time.Now().Add(90 * 24 * time.Hour) }
