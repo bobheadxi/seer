@@ -31,7 +31,8 @@ func TestBigQuery_Integration(t *testing.T) {
 	// initialize store
 	cfg, err := config.NewEnvConfig()
 	require.NoError(t, err)
-	cfg.BigQuery.MatchesTableID = "matches_integration_test" // hard override for test
+	cfg.BigQuery.MatchesTableID = "matches_integration_test"     // hard override for test
+	cfg.BigQuery.TimelinesTableID = "timelines_integration_test" // hard override for test
 	bqs, err := NewBigQueryStore(ctx, l, BigQueryOpts{
 		ProjectID: cfg.GCPProjectID,
 		ConnOpts:  cfg.GCPConnOpts(),
@@ -40,10 +41,10 @@ func TestBigQuery_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// delete tables
-	matchesTable := bqs.(*bigQueryStore).bqMatchesTable()
-	matchesTable.Delete(ctx)
-	teamView := bqs.(*bigQueryStore).bqTeamView(testTeam)
-	teamView.Delete(ctx)
+	ds := bqs.(*bigQueryStore).bqDataset()
+	ds.Table(cfg.BigQuery.MatchesTableID).Delete(ctx)
+	ds.Table(cfg.BigQuery.TimelinesTableID).Delete(ctx)
+	bqs.(*bigQueryStore).bqTeamView(testTeam).Delete(ctx)
 
 	// read test data
 	var match1, match2, match3, match4, match5 riot.MatchDetails
@@ -54,11 +55,19 @@ func TestBigQuery_Integration(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(fixtures.TestMatch5), &match5))
 	var team Team
 	require.NoError(t, json.Unmarshal([]byte(fixtures.TestTeam), &team))
+	var timeline1 riot.MatchTimeline
+	require.NoError(t, json.Unmarshal([]byte(fixtures.TestTimeline1), &timeline1))
 
 	// upload test data
 	t.Run("Add()", func(t *testing.T) {
 		require.NoError(t, bqs.Add(ctx, "integration-test",
-			Matches{{&match1}, {&match2}, {&match3}, {&match4}, {&match5}}))
+			Matches{
+				{&match1, &timeline1},
+				{&match2, &timeline1},
+				{&match3, &timeline1},
+				{&match4, &timeline1},
+				{&match5, &timeline1},
+			}))
 	})
 
 	// create test team

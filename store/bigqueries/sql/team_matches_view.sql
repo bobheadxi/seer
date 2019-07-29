@@ -5,14 +5,14 @@ WITH
   ),
   candidateGames AS (
     SELECT
-      match.details.gameId,
+      match.gameId,
       participant.teamId,
       member
     FROM
       /* <project>.<dataset>.<table> */
       `%[2]s.%[3]s.%[4]s` as match,
       query,
-      UNNEST(match.details.participantIdentities) AS identity
+      UNNEST(match.participantIdentities) AS identity
     JOIN
       UNNEST(members) AS member
     ON (
@@ -20,13 +20,13 @@ WITH
       OR identity.player.accountId = member
     )
     JOIN
-      UNNEST(match.details.participants) AS participant
+      UNNEST(match.participants) AS participant
     ON
       participant.participantId = identity.participantId
   )
 
 SELECT
-  match.details.*
+  match.*
 FROM
   /* <project>.<dataset>.<table> */
   `%[2]s.%[3]s.%[4]s` as match
@@ -39,6 +39,6 @@ WHERE (
   (
     SELECT COUNT(DISTINCT teamId)
     FROM candidateGames
-    WHERE match.details.gameId = candidateGames.gameId
+    WHERE match.gameId = candidateGames.gameId
   ) = 1
 )

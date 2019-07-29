@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -143,7 +144,9 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 	if err != nil {
 		return nil, err
 	}
-	log.Info("query for matches complete", zap.Any("stats", stats))
+	log.Info("query for matches complete",
+		zap.Bool("cache_hit", stats.CacheHit),
+		zap.Int64("bytes_billed", stats.TotalBytesBilled))
 
 	// parse results
 	it, err := job.Read(ctx)
@@ -177,42 +180,56 @@ func (s *bigQueryStore) Add(ctx context.Context, teamID string, matches Matches)
 
 	// convert matches into a BigQuery compatible json document (new-line demited)
 	timer := time.Now()
-	var buf bytes.Buffer
+	var err error
+	var matchesBytes, timelinesBytes bytes.Buffer
+	var matchesEnc, timelinesEnc = json.NewEncoder(&matchesBytes), json.NewEncoder(&timelinesBytes)
 	for _, m := range matches {
-		bytes, err := json.Marshal(&m)
-		if err != nil {
+		// encode match
+		if err = matchesEnc.Encode(&m.Details); err != nil {
 			log.Error("failed to unmarshal a match",
 				zap.Error(err),
 				zap.Any("match", m))
+			continue
 		}
-		buf.Write(bytes)
-		buf.WriteRune('\n')
+
+		// encode timeline
+		m.Timeline.GameID = m.Details.GameID
+		if err = timelinesEnc.Encode(&m.Timeline); err != nil {
+			log.Error("failed to unmarshal a timeline",
+				zap.Error(err),
+				zap.Any("match", m))
+			continue
+		}
 	}
 	log.Info("marshal complete", zap.Duration("duration", time.Since(timer)))
 
-	// create BiqQuery data source for upload
-	timer = time.Now()
-	data := bigquery.NewReaderSource(&buf)
-	data.SourceFormat = bigquery.JSON
-	data.AutoDetect = true
+	// upload data
+	for _, set := range []struct {
+		key  string
+		data io.Reader
+	}{
+		{s.cfg.MatchesTableID, &matchesBytes},
+		{s.cfg.TimelinesTableID, &timelinesBytes},
+	} {
+		// create BiqQuery data source for upload
+		timer = time.Now()
+		data := bigquery.NewReaderSource(set.data)
+		data.SourceFormat = bigquery.JSON
+		data.AutoDetect = true
 
-	// run upload
-	// TODO: there are somewhat strict limitations on this: https://cloud.google.com/bigquery/quotas#load_jobs
-	// consider pooling multiple team's new matches together
-	loader := s.bqMatchesTable().LoaderFrom(data)
-	loader.Labels = map[string]string{"team": teamID}
-	job, err := loader.Run(ctx)
-	if err != nil {
-		return fmt.Errorf("could not run data load: %v", err)
+		// run upload
+		// TODO: there are somewhat strict limitations on this: https://cloud.google.com/bigquery/quotas#load_jobs
+		// consider pooling multiple team's new matches together
+		loader := s.bqDataset().Table(set.key).LoaderFrom(data)
+		loader.Labels = map[string]string{"team": teamID}
+		stats, err := s.execLoader(ctx, loader)
+		if err != nil {
+			return fmt.Errorf("%s: %v", set.key, err)
+		}
+		log.Info("upload complete",
+			zap.Any("stats", stats),
+			zap.Duration(fmt.Sprintf("%s.duration", set.key), time.Since(timer)))
 	}
-	status, err := job.Wait(ctx)
-	if err != nil {
-		return fmt.Errorf("data load job failed to complete: %v", err)
-	}
-	if err := status.Err(); err != nil {
-		return fmt.Errorf("data load job completed with error: %v", err)
-	}
-	log.Info("upload complete", zap.Duration("duration", time.Since(timer)))
 
 	return nil
 }
@@ -220,10 +237,6 @@ func (s *bigQueryStore) Add(ctx context.Context, teamID string, matches Matches)
 func (s *bigQueryStore) Close() error { return s.Close() }
 
 func (s *bigQueryStore) bqDataset() *bigquery.Dataset { return s.bq.Dataset(s.cfg.DatasetID) }
-
-func (s *bigQueryStore) bqMatchesTable() *bigquery.Table {
-	return s.bqDataset().Table(s.cfg.MatchesTableID)
-}
 
 func (s *bigQueryStore) bqTeamView(teamID string) *bigquery.Table {
 	return s.bqDataset().Table(teamView(teamID))
@@ -253,6 +266,31 @@ func (s *bigQueryStore) execQuery(
 	}
 
 	return job, queryStats, nil
+}
+
+func (s *bigQueryStore) execLoader(
+	ctx context.Context,
+	loader *bigquery.Loader,
+) (*bigquery.LoadStatistics, error) {
+	job, err := loader.Run(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not run data load: %v", err)
+	}
+	status, err := job.Wait(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("data load job failed to complete: %v", err)
+	}
+	if err := status.Err(); err != nil {
+		return nil, fmt.Errorf("data load job completed with error: %v, errors: %+v", err, status.Errors)
+	}
+	if status.Statistics == nil {
+		return nil, errors.New("no statistics attached to loader")
+	}
+	loadStats, ok := status.Statistics.Details.(*bigquery.LoadStatistics)
+	if !ok {
+		return nil, fmt.Errorf("did not receive query stats, got %T", status.Statistics.Details)
+	}
+	return loadStats, nil
 }
 
 func teamView(teamID string) string { return fmt.Sprintf("team_%s", teamID) }

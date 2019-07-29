@@ -7,6 +7,10 @@ type (
 	MatchTimeline struct {
 		FrameInterval int             `json:"frameInterval"`
 		Frames        []TimelineFrame `json:"frames"`
+
+		// GameID is NOT provided by Riot API, must be set - mostly for use with
+		// BigQuery
+		GameID int64 `json:"gameId"`
 	}
 
 	// TimelineFrame records the state of a game at a point in time

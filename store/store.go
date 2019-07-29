@@ -45,7 +45,8 @@ func (t *Team) GenerateTeamID() string {
 
 // MatchData is a container for details about a match
 type MatchData struct {
-	Details *riot.MatchDetails `json:"details"`
+	Details  *riot.MatchDetails  `json:"details"`
+	Timeline *riot.MatchTimeline `json:"timeline"`
 }
 
 // Matches is a collection of MatchData. It can be sorted so that the most recent
