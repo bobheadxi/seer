@@ -24,7 +24,7 @@ func startServer(
 	}
 
 	// storage backend
-	s, err := newStorageBackend(log, flags.Store(), cfg)
+	s, err := newStorageBackend(log, flags.Store(), cfg, meta)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

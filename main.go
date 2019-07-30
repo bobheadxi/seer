@@ -30,7 +30,7 @@ func main() {
 	log, err := zapx.New(flags.LogPath, flags.Dev,
 		zapx.WithDebug(flags.Dev),
 		zapx.WithFields(map[string]interface{}{
-			"build.commit": meta.Commit,
+			"build.version": meta.Version,
 		}))
 	if err != nil {
 		panic(err)

@@ -34,9 +34,10 @@ func TestBigQuery_Integration(t *testing.T) {
 	cfg.BigQuery.MatchesTableID = "matches_integration_test"     // hard override for test
 	cfg.BigQuery.TimelinesTableID = "timelines_integration_test" // hard override for test
 	bqs, err := NewBigQueryStore(ctx, l, BigQueryOpts{
-		ProjectID: cfg.GCPProjectID,
-		ConnOpts:  cfg.GCPConnOpts(),
-		DataOpts:  cfg.BigQuery,
+		ServiceVersion: "test",
+		ProjectID:      cfg.GCPProjectID,
+		ConnOpts:       cfg.GCPConnOpts(),
+		DataOpts:       cfg.BigQuery,
 	})
 	require.NoError(t, err)
 

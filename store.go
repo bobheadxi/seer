@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func newStorageBackend(log *zap.Logger, storage config.Store, cfg config.Config) (s store.Store, err error) {
+func newStorageBackend(log *zap.Logger, storage config.Store, cfg config.Config, md config.BuildMeta) (s store.Store, err error) {
 	ctx := context.Background()
 	log.Info(fmt.Sprintf("configuring '%s' storage backend", storage))
 	switch storage {
@@ -20,9 +20,10 @@ func newStorageBackend(log *zap.Logger, storage config.Store, cfg config.Config)
 		})
 	case config.StoreBigQuery:
 		s, err = store.NewBigQueryStore(ctx, log, store.BigQueryOpts{
-			ProjectID: cfg.GCPProjectID,
-			ConnOpts:  cfg.GCPConnOpts(),
-			DataOpts:  cfg.BigQuery,
+			ServiceVersion: md.Version,
+			ProjectID:      cfg.GCPProjectID,
+			ConnOpts:       cfg.GCPConnOpts(),
+			DataOpts:       cfg.BigQuery,
 		})
 	default:
 		log.Error(fmt.Sprintf("unsupported storage backend '%s'", storage))

@@ -26,11 +26,14 @@ type bigQueryStore struct {
 	bq *bigquery.Client
 
 	project string
+	version string
 	cfg     config.BigQuery
 }
 
 // BigQueryOpts defines options for a BigQuery connection
 type BigQueryOpts struct {
+	ServiceVersion string
+
 	ProjectID string
 	ConnOpts  []option.ClientOption
 
@@ -47,11 +50,15 @@ func NewBigQueryStore(ctx context.Context, l *zap.Logger, bqOpts BigQueryOpts) (
 	if err != nil {
 		return nil, fmt.Errorf("hybrid-store: failed to initialize bigquery client: %v", err)
 	}
+	if bqOpts.ServiceVersion == "" {
+		bqOpts.ServiceVersion = "unknown"
+	}
 
 	return &bigQueryStore{
 		l:  l,
 		bq: bqc,
 
+		version: bqOpts.ServiceVersion,
 		project: bqOpts.ProjectID,
 		cfg:     bqOpts.DataOpts,
 	}, nil
@@ -81,9 +88,11 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 		Name:        "", // TODO? this could be pretty-name
 		Description: string(membersBytes),
 		Labels: map[string]string{
-			"team":    teamID,
-			"region":  team.Region.ToLower(),
-			"updated": fmt.Sprint(time.Now().Unix()),
+			"team":            teamID,
+			"region":          team.Region.ToLower(),
+			"updated":         fmt.Sprint(time.Now().Unix()),
+			"members":         fmt.Sprint(len(team.Members)),
+			"service_version": s.version,
 		},
 		ViewQuery: fmt.Sprintf(string(rawQuery),
 			strings.Join(members, ","),
