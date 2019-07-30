@@ -1,10 +1,5 @@
 package riot
 
-import (
-	"encoding/json"
-	"sort"
-)
-
 type (
 	// MatchTimeline is the set of events for a match
 	MatchTimeline struct {
@@ -20,7 +15,7 @@ type (
 	TimelineFrame struct {
 		Timestamp         int                `json:"timestamp"`
 		ParticipantFrames *ParticipantFrames `json:"participantFrames"`
-		// Events            []interface{}               `json:"events"`
+		Events            []FrameEvent       `json:"events"`
 	}
 
 	// ParticipantFrames is a container for all participants - no maps in BigQuery
@@ -36,51 +31,4 @@ type (
 		Participant9  ParticipantFrame `json:"9"`
 		Participant10 ParticipantFrame `json:"10"`
 	}
-
-	// ParticipantFrame records the state of a participant at a point in time
-	ParticipantFrame struct {
-		ParticipantID       int `json:"participantId"`
-		Level               int `json:"level"`
-		Xp                  int `json:"xp"`
-		TotalGold           int `json:"totalGold"`
-		CurrentGold         int `json:"currentGold"`
-		MinionsKilled       int `json:"minionsKilled"`
-		JungleMinionsKilled int `json:"jungleMinionsKilled"`
-		Position            struct {
-			Y int `json:"y"`
-			X int `json:"x"`
-		} `json:"position"`
-	}
 )
-
-type participantFrames []ParticipantFrame
-
-func (f participantFrames) Len() int           { return len(f) }
-func (f participantFrames) Less(i, j int) bool { return f[i].ParticipantID < f[j].ParticipantID }
-func (f participantFrames) Swap(i, j int) {
-	tmp := f[i]
-	f[i] = f[j]
-	f[j] = tmp
-}
-
-// MarshalJSON is for BigQuery, where we can't have column names starting with
-// numbers, so pop these into an array for UNNEST
-func (f *ParticipantFrames) MarshalJSON() ([]byte, error) {
-	if f == nil {
-		return json.Marshal(participantFrames{})
-	}
-	parts := participantFrames{
-		f.Participant1,
-		f.Participant2,
-		f.Participant3,
-		f.Participant4,
-		f.Participant5,
-		f.Participant6,
-		f.Participant7,
-		f.Participant8,
-		f.Participant9,
-		f.Participant10,
-	}
-	sort.Sort(parts)
-	return json.Marshal(parts)
-}
