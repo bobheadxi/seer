@@ -88,11 +88,12 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 		Name:        "", // TODO? this could be pretty-name
 		Description: string(membersBytes),
 		Labels: map[string]string{
-			"team":            teamID,
-			"region":          team.Region.ToLower(),
-			"updated":         fmt.Sprint(time.Now().Unix()),
-			"members":         fmt.Sprint(len(team.Members)),
-			"service_version": s.version,
+			"team":    teamID,
+			"region":  team.Region.ToLower(),
+			"updated": fmt.Sprint(time.Now().Unix()),
+			"members": fmt.Sprint(len(team.Members)),
+
+			serviceVersionLabel: s.version,
 		},
 		ViewQuery: fmt.Sprintf(string(rawQuery),
 			strings.Join(members, ","),
@@ -141,6 +142,7 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 	opTimer := time.Now()
 	defer logDuration(log, "matches get complete", "GetMatches.duration", opTimer)
 
+	// construct query
 	rawQuery, err := bigqueries.ReadFile(bigqueries.TeamGamesQuery)
 	if err != nil {
 		return nil, err
@@ -149,6 +151,7 @@ func (s *bigQueryStore) GetMatches(ctx context.Context, teamID string) ([]int64,
 		s.project,
 		s.cfg.DatasetID,
 		teamView(teamID)))
+	query.Labels = map[string]string{"team": teamID}
 
 	// execute query
 	job, stats, err := s.execQuery(ctx, query)
@@ -262,6 +265,12 @@ func (s *bigQueryStore) execQuery(
 	ctx context.Context,
 	query *bigquery.Query,
 ) (*bigquery.Job, *bigquery.QueryStatistics, error) {
+	if query.Labels == nil {
+		query.Labels = map[string]string{serviceVersionLabel: s.version}
+	} else {
+		query.Labels[serviceVersionLabel] = s.version
+	}
+
 	job, err := query.Run(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -288,6 +297,12 @@ func (s *bigQueryStore) execLoader(
 	ctx context.Context,
 	loader *bigquery.Loader,
 ) (*bigquery.LoadStatistics, error) {
+	if loader.Labels == nil {
+		loader.Labels = map[string]string{serviceVersionLabel: s.version}
+	} else {
+		loader.Labels[serviceVersionLabel] = s.version
+	}
+
 	job, err := loader.Run(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not run data load: %v", err)
@@ -313,3 +328,5 @@ func teamView(teamID string) string { return fmt.Sprintf("team_%s", teamID) }
 
 // TODO: make longer when enabling billing
 func defaultExpire() time.Time { return time.Now().Add(50 * 24 * time.Hour) }
+
+const serviceVersionLabel = "service_version"
