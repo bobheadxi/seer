@@ -1,22 +1,12 @@
 package analytics
 
+// Analytics is the root container for Seer analytics
 type Analytics struct {
 	Team    map[string]*TeamAnalytics              `json:"team"`    // per season
 	Players map[string]map[string]*PlayerAnalytics `json:"players"` // per season, per player
 }
 
-type PlayerAnalytics struct {
-	Tier         string              `json:"season_tier"`
-	Aggregations *PlayerAggregations `json:"aggregations"`
-}
-
-type PlayerAggregations struct {
-	Lanes []string `json:"lanes"` // top 2
-	Roles []string `json:"roles"` // top 2
-
-	Champions map[string]ChampionAggregation `json:"champions"` // per champion in top 5
-}
-
+// Aggregate is a generic container for basic aggregations
 type Aggregate struct {
 	Average float64 `json:"average"`
 	Max     float64 `json:"max"`
@@ -24,32 +14,24 @@ type Aggregate struct {
 	StdDev  float64 `json:"stddev"`
 }
 
-type Perks struct {
-	Primary   string
-	Secondary string
-}
-
-type Summoners struct {
-	Spell1 string
-	Spell2 string
-}
-
+// ChampionAggregation compiles data about a played champion
 type ChampionAggregation struct {
-	Lane string
-	Role string
+	Lane string `json:"lane"`
+	Role string `json:"role"`
 
-	Perks     Perks
-	Summoners Summoners
-	Items     []string
+	Perks     Perks     `json:"perks"`
+	Summoners Summoners `json:"summoners"`
+	Items     []string  `json:"items"`
 
-	Games     GameAggregations
-	Timelines TimelineAggregations
+	Games GameAggregations `json:"games"`
+	// Timelines TimelineAggregations `json:"timelines"`
 }
 
-type TimelineAggregations struct {
-	// TODO
-}
+/*
+type TimelineAggregations struct { }
+*/
 
+// GameAggregations compiles a basic overview of games
 type GameAggregations struct {
 	Kills   Aggregate
 	Deaths  Aggregate
@@ -64,8 +46,4 @@ type GameAggregations struct {
 	Minions        Aggregate
 	JungleFriendly Aggregate
 	JungleEnemy    Aggregate
-}
-
-type TeamAnalytics struct {
-	// TODO
 }
