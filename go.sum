@@ -240,6 +240,8 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/configcat/go-sdk.v1 v1.0.0-20190728152915-0910241c4ef9 h1:VGsp6tPG4e1+MIWzRJvXKro/o00hY5ZU1llATL7Ccdw=
 gopkg.in/configcat/go-sdk.v1 v1.0.0-20190728152915-0910241c4ef9/go.mod h1:UihCQZ7wHOd2ORK6prPHVecfWgMhJhaHC5o9wHqEUK8=
+gopkg.in/configcat/go-sdk.v1 v1.0.0-20190821191113-c19da78479ea h1:j84+LWSw+1AAjL+jym3w9wV2OcoS1duJcggUTX/6wGs=
+gopkg.in/configcat/go-sdk.v1 v1.0.0-20190821191113-c19da78479ea/go.mod h1:UihCQZ7wHOd2ORK6prPHVecfWgMhJhaHC5o9wHqEUK8=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=

@@ -6,6 +6,7 @@ import (
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	configcat "gopkg.in/configcat/go-sdk.v1"
@@ -33,12 +34,14 @@ type Config struct {
 }
 
 // NewEnvConfig instatiates configuration from environment
-func NewEnvConfig() (*Config, error) {
+func NewEnvConfig(l *zap.Logger) (*Config, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
-	cfg.dynamic = configcat.NewClient(cfg.ConfigCatKey)
+	catCfg := configcat.DefaultClientConfig()
+	catCfg.Logger = &catLogger{l}
+	cfg.dynamic = configcat.NewCustomClient(cfg.ConfigCatKey, catCfg)
 	return &cfg, nil
 }
 
