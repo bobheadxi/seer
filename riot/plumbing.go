@@ -31,7 +31,7 @@ type httpClient struct {
 	l    *zap.Logger
 	http *http.Client
 
-	auth string
+	auth func() string
 }
 
 func (c *httpClient) Get(ctx context.Context, url string, query params, out interface{}) error {
@@ -42,7 +42,7 @@ func (c *httpClient) Get(ctx context.Context, url string, query params, out inte
 		return err
 	}
 	log.Debug("request created", zap.Any("target.parsed_url", req.URL))
-	req.Header.Set("X-Riot-Token", c.auth)
+	req.Header.Set("X-Riot-Token", c.auth())
 
 	resp, err := c.http.Do(req.WithContext(ctx))
 	if err != nil {

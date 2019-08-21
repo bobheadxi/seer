@@ -1,12 +1,14 @@
 package config
 
 import (
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gomodule/redigo/redis"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
+	configcat "gopkg.in/configcat/go-sdk.v1"
 )
 
 // Config exposes server configuration
@@ -16,9 +18,6 @@ type Config struct {
 	RedisURL       string `env:"REDIS_URL"` // redis conn string
 	RedisAddr      string `env:"REDIS_ADDR"`
 
-	// Riot API
-	RiotAPIToken string `env:"RIOT_API_TOKEN,required"` // TODO: need a mechanism to update this
-
 	// GitHub
 	GitHubToken     string `env:"GITHUB_TOKEN,required"`
 	GitHubStoreRepo GitHubStoreRepo
@@ -27,12 +26,27 @@ type Config struct {
 	GCPProjectID   string `env:"GCP_PROJECT_ID"`
 	GCPCredentials string `env:"GCP_CREDENTIALS"`
 	BigQuery       BigQuery
+
+	// dynamic configuration
+	ConfigCatKey string `env:"CONFIGCAT_KEY"`
+	dynamic      *configcat.Client
 }
 
 // NewEnvConfig instatiates configuration from environment
-func NewEnvConfig() (Config, error) {
+func NewEnvConfig() (*Config, error) {
 	var cfg Config
-	return cfg, env.Parse(&cfg)
+	if err := env.Parse(&cfg); err != nil {
+		return nil, err
+	}
+	cfg.dynamic = configcat.NewClient(cfg.ConfigCatKey)
+	return &cfg, nil
+}
+
+const riotAPIKey = "RIOT_API_TOKEN"
+
+// RiotAPIToken generates a token for the Riot API
+func (c *Config) RiotAPIToken() string {
+	return c.dynamic.GetValue(riotAPIKey, os.Getenv(riotAPIKey)).(string)
 }
 
 // GitHubAPITokenSource inits a static token source from this configuration

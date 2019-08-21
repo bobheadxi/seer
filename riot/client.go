@@ -24,7 +24,7 @@ type client struct {
 }
 
 // NewClient instantiates an API implementation
-func NewClient(l *zap.Logger, auth string) (API, error) {
+func NewClient(l *zap.Logger, auth func() string) (API, error) {
 	return &client{
 		l:       l,
 		http:    &httpClient{l.Named("http"), http.DefaultClient, auth},

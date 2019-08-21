@@ -64,14 +64,14 @@ func main() {
 	// handle other operation modes
 	switch flags.Mode() {
 	case config.ModeServer:
-		startServer(log.Named("server"), flags, cfg, meta)
+		startServer(log.Named("server"), flags, *cfg, meta)
 
 	case config.ModeWorker:
-		startWorker(log.Named("worker"), flags, cfg, meta)
+		startWorker(log.Named("worker"), flags, *cfg, meta)
 
 	case config.ModeAll:
-		go startServer(log.Named("server"), flags, cfg, meta)
-		startWorker(log.Named("worker"), flags, cfg, meta)
+		go startServer(log.Named("server"), flags, *cfg, meta)
+		startWorker(log.Named("worker"), flags, *cfg, meta)
 
 	default:
 		fmt.Printf("unknown mode '%s'", flags.Mode())
