@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -29,27 +30,40 @@ type Config struct {
 	BigQuery       BigQuery
 
 	// dynamic configuration
-	ConfigCatKey string `env:"CONFIGCAT_KEY"`
-	dynamic      *configcat.Client
+	NoDynamicConfiguration bool   `env:"NO_DYNAMIC_CONFIGURATION"`
+	ConfigCatKey           string `env:"CONFIGCAT_KEY"`
+	dynamic                *configcat.Client
 }
 
 // NewEnvConfig instatiates configuration from environment
-func NewEnvConfig(l *zap.Logger) (*Config, error) {
+func NewEnvConfig() (*Config, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
+	return &cfg, nil
+}
+
+// InitDynamicConfig sets up dynamic configuration features
+func (c *Config) InitDynamicConfig(l *zap.Logger) error {
+	if c.ConfigCatKey == "" {
+		return errors.New("no key for dynamic configuration was provided")
+	}
 	catCfg := configcat.DefaultClientConfig()
 	catCfg.Logger = &catLogger{l}
-	cfg.dynamic = configcat.NewCustomClient(cfg.ConfigCatKey, catCfg)
-	return &cfg, nil
+	c.dynamic = configcat.NewCustomClient(c.ConfigCatKey, catCfg)
+	return nil
 }
 
 const riotAPIKey = "RIOT_API_TOKEN"
 
 // RiotAPIToken generates a token for the Riot API
 func (c *Config) RiotAPIToken() string {
-	return c.dynamic.GetValue(riotAPIKey, os.Getenv(riotAPIKey)).(string)
+	def := os.Getenv(riotAPIKey)
+	if c.dynamic == nil {
+		return def
+	}
+	return c.dynamic.GetValue(riotAPIKey, def).(string)
 }
 
 // GitHubAPITokenSource inits a static token source from this configuration

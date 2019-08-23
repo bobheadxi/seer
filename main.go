@@ -37,6 +37,14 @@ func main() {
 	}
 	defer log.Sync()
 
+	// init dynamic configuration
+	if !cfg.NoDynamicConfiguration {
+		log.Info("initializing dynamic configuration")
+		cfg.InitDynamicConfig(log.Named("dynamic_config"))
+	} else {
+		log.Info("dynamic configuration disabled")
+	}
+
 	// report basic config
 	log.Debug("configuration loaded",
 		zap.Any("config", cfg),
