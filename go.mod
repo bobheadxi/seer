@@ -14,16 +14,20 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-github/v26 v26.1.3
 	github.com/joho/godotenv v1.3.0
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron v1.2.0 // indirect
-	github.com/stretchr/testify v1.3.0
-	github.com/tkrajina/typescriptify-golang-structs v0.0.7 // indirect
+	github.com/stretchr/testify v1.4.0
 	go.bobheadxi.dev/res v0.2.0
-	go.bobheadxi.dev/zapx v0.5.0
+	go.bobheadxi.dev/zapx/zapx v0.6.4
+	go.bobheadxi.dev/zapx/zhttp v0.6.4
 	go.uber.org/multierr v1.1.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/net v0.0.0-20190628185345-da137c7871d7
+	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
+	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb // indirect
 	google.golang.org/api v0.7.0
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/configcat/go-sdk.v1 v1.0.0-20190821191113-c19da78479ea
 )

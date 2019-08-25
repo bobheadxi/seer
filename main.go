@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.bobheadxi.dev/seer/config"
-	"go.bobheadxi.dev/zapx"
+	"go.bobheadxi.dev/zapx/zapx"
 )
 
 func main() {
