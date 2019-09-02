@@ -24,3 +24,16 @@
       alt="Website Status">
   </a>
 </p>
+
+<br />
+
+## What is this?
+
+Seer aims to be a service where users can input a group of [League of Legends](https://na.leagueoflegends.com/en/)
+players to track as a "team". The service will then pull game matches and
+associated data periodically or on trigger from the [Riot Games API](https://developer.riotgames.com/)
+and pipe them into a public [BigQuery](https://cloud.google.com/bigquery/)
+dataset. The goal is to make this dataset available for everyone to play around
+with, and for it to power the main [seer.bobheadxi.dev](https://seer.bobheadxi.dev)
+website. This website aims to allow members of teams to gain insights into their
+team's performance over time, as well as to allow players to "scout" other teams.
