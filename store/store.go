@@ -16,18 +16,25 @@ type Store interface {
 	Create(ctx context.Context, teamID string, team *Team) error
 	Add(ctx context.Context, teamID string, matches Matches) error
 
-	GetTeam(ctx context.Context, teamID string) (*Team, error)
+	GetTeam(ctx context.Context, teamID string) (*TeamWithAnalytics, error)
 	GetMatches(ctx context.Context, teamID string) ([]int64, error)
 
+	// GetTeams(ctx context.Context, opts Options) ([]*Team, error)
 	// LastUpdated(ctx context.Context, teamID string) (*time.Time, error)
 
+	// Migrate() error
 	Close() error
 }
 
 // Team represents a team
 type Team struct {
-	Region    riot.Region          `json:"region"`
-	Members   []*riot.Summoner     `json:"members"`
+	Region  riot.Region      `json:"region"`
+	Members []*riot.Summoner `json:"members"`
+}
+
+// TeamWithAnalytics represents a team as well as associated analytics
+type TeamWithAnalytics struct {
+	*Team
 	Analytics *analytics.Analytics `json:"analytics"`
 }
 

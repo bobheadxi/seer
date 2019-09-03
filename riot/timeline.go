@@ -7,8 +7,8 @@ type (
 		Frames        []TimelineFrame `json:"frames"`
 
 		// GameID is NOT provided by Riot API, must be set - mostly for use with
-		// BigQuery
-		GameID int64 `json:"gameId"`
+		// BigQuery as a foreign relation
+		GameID int64 `json:"gameId,omitempty"`
 	}
 
 	// TimelineFrame records the state of a game at a point in time

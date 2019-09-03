@@ -26,6 +26,6 @@ type (
 		Name          string `json:"name"`
 		SummonerLevel int    `json:"summonerLevel"`
 		ProfileIconID int    `json:"profileIconId"`
-		PlayerID      string `json:"id"`
+		PlayerID      string `json:"id,omitempty"`
 	}
 )

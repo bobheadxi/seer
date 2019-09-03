@@ -7,4 +7,7 @@ const (
 	TeamMatchesView = "sql/team_matches_view.sql"
 	// TeamGamesQuery is the source for the team games query
 	TeamGamesQuery = "sql/team_games.sql"
+
+	// AnalyticsQuery is the source for the team analytics query
+	AnalyticsQuery = "sql/player_analytics.sql"
 )

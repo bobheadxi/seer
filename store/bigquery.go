@@ -16,6 +16,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
+	"go.bobheadxi.dev/seer/analytics"
 	"go.bobheadxi.dev/seer/config"
 	"go.bobheadxi.dev/seer/riot"
 	"go.bobheadxi.dev/seer/store/bigqueries"
@@ -48,7 +49,7 @@ func NewBigQueryStore(ctx context.Context, l *zap.Logger, bqOpts BigQueryOpts) (
 		zap.Any("data_opts", bqOpts.DataOpts))
 	bqc, err := bigquery.NewClient(ctx, bqOpts.ProjectID, bqOpts.ConnOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("hybrid-store: failed to initialize bigquery client: %v", err)
+		return nil, fmt.Errorf("bqstore: failed to initialize bigquery client: %v", err)
 	}
 	if bqOpts.ServiceVersion == "" {
 		bqOpts.ServiceVersion = "unknown"
@@ -115,7 +116,12 @@ func (s *bigQueryStore) Create(ctx context.Context, teamID string, team *Team) e
 	return nil
 }
 
-func (s *bigQueryStore) GetTeam(ctx context.Context, teamID string) (*Team, error) {
+func (s *bigQueryStore) GetTeam(ctx context.Context, teamID string) (*TeamWithAnalytics, error) {
+	log := s.l.With(zap.String("request.id", middleware.GetReqID(ctx)), zap.String("team.id", teamID))
+	opTimer := time.Now()
+	defer logDuration(log, "team get complete", "GetTeam.duration", opTimer)
+
+	// get members
 	t := s.bqTeamView(teamID)
 	md, err := t.Metadata(ctx)
 	if err != nil {
@@ -124,16 +130,55 @@ func (s *bigQueryStore) GetTeam(ctx context.Context, teamID string) (*Team, erro
 	if md.Type != bigquery.ViewTable {
 		return nil, fmt.Errorf("expected table to be a view, go '%s'", md.Type)
 	}
-
 	var members []*riot.Summoner
 	if err := json.Unmarshal([]byte(md.Description), &members); err != nil {
 		return nil, err
 	}
 
-	return &Team{
-		Region:    riot.ParseRegion(md.Labels["region"]),
-		Members:   members,
-		Analytics: nil, // TODO
+	// get analytics
+	rawQuery, err := bigqueries.ReadFile(bigqueries.AnalyticsQuery)
+	if err != nil {
+		return nil, err
+	}
+	/* TODO: templatize!
+	query := s.bq.Query(fmt.Sprintf(string(rawQuery),
+		s.project,
+		s.cfg.DatasetID,
+		teamView(teamID)))*/
+	query := s.bq.Query(string(rawQuery))
+	query.Labels = map[string]string{"team": teamID}
+	job, stats, err := s.execQuery(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("analytics: failed to execute query: %+v", err)
+	}
+	log.Info("query for analytics complete",
+		zap.Bool("cache_hit", stats.CacheHit),
+		zap.Int64("bytes_billed", stats.TotalBytesBilled))
+	job.Read(ctx)
+
+	// parse results
+	it, err := job.Read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	an := analytics.NewAnalytics()
+	for {
+		var player analytics.PlayerAnalytics
+		// TODO: not parsing nested structs right
+		if err := it.Next(&player); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, fmt.Errorf("failed to fetch next row: %+v", err)
+		}
+		an.Players = append(an.Players, &player)
+	}
+
+	return &TeamWithAnalytics{
+		Team: &Team{
+			Region:  riot.ParseRegion(md.Labels["region"]),
+			Members: members,
+		},
+		Analytics: an,
 	}, nil
 }
 
@@ -253,7 +298,7 @@ func (s *bigQueryStore) Add(ctx context.Context, teamID string, matches Matches)
 	return nil
 }
 
-func (s *bigQueryStore) Close() error { return s.Close() }
+func (s *bigQueryStore) Close() error { return s.bq.Close() }
 
 func (s *bigQueryStore) bqDataset() *bigquery.Dataset { return s.bq.Dataset(s.cfg.DatasetID) }
 

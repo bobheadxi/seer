@@ -109,7 +109,8 @@ func (t *teamAPI) getTeam(w http.ResponseWriter, r *http.Request) {
 		zap.Int("matches", len(matches)))
 	res.R(w, r, res.MsgOK("team found",
 		"team", team,
-		"matches", matches))
+		"matches", matches,
+		"analytics", nil))
 }
 
 func (t *teamAPI) postUpdateTeam(w http.ResponseWriter, r *http.Request) {

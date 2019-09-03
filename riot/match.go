@@ -65,7 +65,11 @@ type (
 			HighestAchievedSeasonTier string `json:"highestAchievedSeasonTier,omitempty"`
 			Spell1ID                  int    `json:"spell1Id"`
 			Spell2ID                  int    `json:"spell2Id"`
-			Stats                     struct {
+			Timeline                  struct {
+				Lane string `json:"lane"`
+				Role string `json:"role"`
+			} `json:"timeline"`
+			Stats struct {
 				ParticipantID int  `json:"participantId"`
 				Win           bool `json:"win"`
 

@@ -2,23 +2,28 @@ package analytics
 
 // PlayerAnalytics is a container for analytics on a single player
 type PlayerAnalytics struct {
-	Tier         string              `json:"season_tier"`
+	AccountID    string              `json:"accountId"`
+	Tier         string              `json:"seasonTier"`
 	Aggregations *PlayerAggregations `json:"aggregations"`
 }
 
+// PlayerAggregations define aggregations for a player
 type PlayerAggregations struct {
-	Lanes []string `json:"lanes"` // top 2
-	Roles []string `json:"roles"` // top 2
-
-	Champions map[string]ChampionAggregation `json:"champions"` // per champion in top 5
+	Champions []ChampionAggregation `json:"champions"` // per champion in top 5
 }
 
-type Perks struct {
-	Primary   string `json:"primary"`
-	Secondary string `json:"secondary"`
-}
+// ChampionAggregation compiles data about a played champion
+type ChampionAggregation struct {
+	ChampionID string `json:"championId"`
+	Count      int    `json:"count"`
 
-type Summoners struct {
-	Spell1 string `json:"spell1"`
-	Spell2 string `json:"spell2"`
+	Lanes []Count `json:"lanes"`
+	Roles []Count `json:"roles"`
+
+	Perks     []Count `json:"perks"`
+	Summoners []Count `json:"summoners"`
+	// Items     []Count `json:"items"`
+
+	// Games GameAggregations `json:"games"`
+	// Timelines TimelineAggregations `json:"timelines"`
 }

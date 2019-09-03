@@ -2,8 +2,15 @@ package analytics
 
 // Analytics is the root container for Seer analytics
 type Analytics struct {
-	Team    map[string]*TeamAnalytics              `json:"team"`    // per season
-	Players map[string]map[string]*PlayerAnalytics `json:"players"` // per season, per player
+	// Team    map[string]*TeamAnalytics   `json:"team"`    // per season
+	Players []*PlayerAnalytics `json:"players"` // per player. TODO: per season?
+}
+
+// NewAnalytics instantiates a new base analytics object
+func NewAnalytics() *Analytics {
+	return &Analytics{
+		Players: make([]*PlayerAnalytics, 0),
+	}
 }
 
 // Aggregate is a generic container for basic aggregations
@@ -14,22 +21,16 @@ type Aggregate struct {
 	StdDev  float64 `json:"stddev"`
 }
 
-// ChampionAggregation compiles data about a played champion
-type ChampionAggregation struct {
-	Lane string `json:"lane"`
-	Role string `json:"role"`
-
-	Perks     Perks     `json:"perks"`
-	Summoners Summoners `json:"summoners"`
-	Items     []string  `json:"items"`
-
-	Games GameAggregations `json:"games"`
-	// Timelines TimelineAggregations `json:"timelines"`
+// Count is a generic container for count aggregations
+type Count struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
 }
 
-/*
-type TimelineAggregations struct { }
-*/
+// TimelineAggregations contains analytics from timeline data
+type TimelineAggregations struct {
+	// build order, lane/jungle path, etc.
+}
 
 // GameAggregations compiles a basic overview of games
 type GameAggregations struct {
