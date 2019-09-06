@@ -16,7 +16,7 @@ variables:
 steps:
 - task: GoTool@0
   inputs:
-    version: '1.12'
+    version: '1.13'
 
 - task: DockerInstaller@0
   displayName: Docker Installer
