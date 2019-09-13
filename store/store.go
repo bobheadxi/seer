@@ -11,6 +11,8 @@ import (
 	"go.bobheadxi.dev/seer/riot"
 )
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o ./mocks/store.go . Store
+
 // Store defines the contract different storage backends for Seer should have
 type Store interface {
 	Create(ctx context.Context, teamID string, team *Team) error

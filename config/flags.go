@@ -23,8 +23,6 @@ const (
 type Store string
 
 const (
-	// StoreGitHub is the GitHub backend
-	StoreGitHub Store = "github"
 	// StoreBigQuery uses a BigQuery backend
 	StoreBigQuery Store = "bigquery"
 )
@@ -35,6 +33,7 @@ type Flags struct {
 	LogPath    string
 	JobsUIPort string
 	APIPort    string
+	CachePath  string
 
 	mode  string
 	store string
@@ -54,11 +53,10 @@ func LoadFlags(args []string) (Flags, error) {
 	flags.StringVar(&v.LogPath, "logpath", "", "path for log storage")
 	flags.StringVar(&v.JobsUIPort, "jobs-ui", "", "enable jobs UI on given port")
 	flags.StringVar(&v.APIPort, "port", "8080", "port to serve Seer API on")
+	flags.StringVar(&v.CachePath, "cache-path", "", "path to cache storage - if none is provided, cache is disabled")
 
 	flags.StringVar(&v.mode, "mode", string(ModeAll), "operation mode to run in")
-
-	// TODO update default
-	flags.StringVar(&v.store, "store", string(StoreGitHub), "storage backend to use")
+	flags.StringVar(&v.store, "store", string(StoreBigQuery), "storage backend to use")
 
 	return v, flags.Parse(args)
 }
