@@ -3,15 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/dgraph-io/badger"
 	"go.uber.org/zap"
 
 	"go.bobheadxi.dev/seer/config"
 	"go.bobheadxi.dev/seer/store"
 	"go.bobheadxi.dev/seer/store/cache"
-	"go.bobheadxi.dev/zapx/zapx"
 )
 
 func newStorageBackend(
@@ -32,21 +29,14 @@ func newStorageBackend(
 			DataOpts:       cfg.BigQuery,
 		})
 	default:
-		log.Error(fmt.Sprintf("unsupported storage backend '%s'", storage))
-		os.Exit(1)
+		log.Fatal(fmt.Sprintf("unsupported storage backend '%s'", storage))
 	}
 
 	if cachePath != "" {
-		badgerLogger := log.Named("badger.db").
-			WithOptions(zapx.WrapWithLevel(zap.ErrorLevel))
-		opts := badger.DefaultOptions(cachePath).
-			WithLogger(zapx.NewFormatLogger(badgerLogger))
-		db, err := badger.Open(opts)
+		s, err = cache.New(log.Named("cache"), s, cfg.DefaultRedisPool())
 		if err != nil {
-			log.Error(fmt.Sprintf("unable to open cache at '%s': %v", cachePath, err))
-			os.Exit(1)
+			log.Fatal("unable to start up cache", zap.Error(err))
 		}
-		s = cache.New(log.Named("cache"), s, db)
 	}
 
 	return
