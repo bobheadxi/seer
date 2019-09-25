@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"go.bobheadxi.dev/zapx/zapx"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/gomodule/redigo/redis"
 	"go.uber.org/zap"
@@ -50,7 +52,7 @@ func (c *Config) InitDynamicConfig(l *zap.Logger) error {
 		return errors.New("no key for dynamic configuration was provided")
 	}
 	catCfg := configcat.DefaultClientConfig()
-	catCfg.Logger = &catLogger{l}
+	catCfg.Logger = &catLogger{l.WithOptions(zapx.WrapWithLevel(zap.ErrorLevel))}
 	c.dynamic = configcat.NewCustomClient(c.ConfigCatKey, catCfg)
 	return nil
 }
